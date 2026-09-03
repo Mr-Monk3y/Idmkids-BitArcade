@@ -2,11 +2,13 @@ import pygame
 
 from input.input_manager import InputManager
 
+from games.registro_juegos import RegistroJuegos
+
 from pantallas.estado import Estado
 from pantallas.menu import Menu
 from pantallas.instrucciones import Instrucciones
-from pantallas.juego import Juego
 from pantallas.resultado import Resultado
+from input.entradas import Entrada
 
 
 # Configuracion de la ventana
@@ -30,16 +32,84 @@ def main():
     reloj = pygame.time.Clock()
 
     input_manager = InputManager()
-    input_manager.conectar_serial("COM5")
 
     menu = Menu(pantalla)
     instrucciones = Instrucciones(pantalla)
-    juego = Juego(pantalla)
+    registro_juegos = RegistroJuegos(pantalla)
+    juego = None
     resultado = Resultado(pantalla)
 
     estado_actual = Estado.MENU
+    juego_seleccionado = None
 
     ejecutando = True
+
+    def procesar_entrada(entrada):
+        """Procesa una entrada independientemente de su origen."""
+
+        nonlocal estado_actual
+        nonlocal juego_seleccionado
+        nonlocal juego
+
+        if estado_actual == Estado.MENU:
+
+            opcion = menu.manejar_entrada(entrada)
+
+            if opcion is not None:
+
+                juego_seleccionado = menu.opciones[opcion]
+
+                instrucciones.establecer_juego(
+                    juego_seleccionado
+                )
+
+                juego = registro_juegos.crear_juego(
+                    juego_seleccionado
+                )
+
+                juego.iniciar()
+
+                estado_actual = Estado.INSTRUCCIONES
+
+        elif estado_actual == Estado.INSTRUCCIONES:
+
+            if entrada.jugador == 0:
+                if entrada.entrada == Entrada.BACK:
+                    estado_actual = Estado.MENU
+                    return
+
+            avanzar = instrucciones.manejar_entrada(entrada)
+
+            if avanzar:
+                estado_actual = Estado.JUEGO
+
+        elif estado_actual == Estado.JUEGO:
+
+            if entrada.jugador == 0:
+                if entrada.entrada == Entrada.BACK:
+                    estado_actual = Estado.MENU
+                    return
+
+            juego.manejar_entrada(entrada)
+
+            if juego.terminado:
+                resultado.establecer_resultado(
+                    juego.obtener_resultado()
+                )
+
+                estado_actual = Estado.RESULTADO
+
+        elif estado_actual == Estado.RESULTADO:
+
+            if entrada.jugador == 0:
+                if entrada.entrada == Entrada.BACK:
+                    estado_actual = Estado.MENU
+                    return
+
+            volver = resultado.manejar_entrada(entrada)
+
+            if volver:
+                estado_actual = Estado.MENU
 
     while ejecutando:
 
@@ -51,118 +121,32 @@ def main():
 
             entrada = input_manager.obtener_evento(evento)
 
-            if entrada is None:
-                continue
+            if entrada is not None:
+                procesar_entrada(entrada)
 
-            if estado_actual == Estado.MENU:
+        if estado_actual == Estado.JUEGO:
+            entradas_mantenidas = (
+                input_manager.obtener_entradas_teclado_mantenidas()
+            )
 
-                opcion = menu.manejar_entrada(entrada)
+            for entrada in entradas_mantenidas:
+                procesar_entrada(entrada)
 
-                if opcion is not None:
+        if estado_actual == Estado.MENU:
+            pass
 
-                    juego_seleccionado = menu.opciones[opcion]
-
-                    instrucciones.establecer_juego(
-                        juego_seleccionado
-                    )
-
-                    juego.establecer_juego(
-                        juego_seleccionado
-                    )
-
-                    estado_actual = Estado.INSTRUCCIONES
-
-            elif estado_actual == Estado.INSTRUCCIONES:
-
-                avanzar = instrucciones.manejar_entrada(entrada)
-
-                if avanzar:
-                    estado_actual = Estado.JUEGO
-
-            elif estado_actual == Estado.JUEGO:
-
-                terminar = juego.manejar_entrada(entrada)
-
-                if terminar:
-                    resultado.establecer_resultado(
-                        juego.juego_seleccionado,
-                        0
-                    )
-
-                    estado_actual = Estado.RESULTADO
-
-            elif estado_actual == Estado.RESULTADO:
-
-                volver = resultado.manejar_entrada(entrada)
-
-                if volver:
-                    estado_actual = Estado.MENU
-            
-        entrada_serial = input_manager.obtener_entrada_serial_real()
-
-        if entrada_serial is not None:
-
-            if estado_actual == Estado.MENU:
-
-                opcion = menu.manejar_entrada(entrada_serial)
-
-                if opcion is not None:
-
-                    juego_seleccionado = menu.opciones[opcion]
-
-                    instrucciones.establecer_juego(
-                        juego_seleccionado
-                    )
-
-                    juego.establecer_juego(
-                        juego_seleccionado
-                    )
-
-                    estado_actual = Estado.INSTRUCCIONES
-
-            elif estado_actual == Estado.INSTRUCCIONES:
-
-                avanzar = instrucciones.manejar_entrada(
-                    entrada_serial
-                )
-
-                if avanzar:
-                    estado_actual = Estado.JUEGO
-
-            elif estado_actual == Estado.JUEGO:
-
-                terminar = juego.manejar_entrada(
-                    entrada_serial
-                )
-
-                if terminar:
-                    resultado.establecer_resultado(
-                        juego.juego_seleccionado,
-                        0
-                    )
-
-                    estado_actual = Estado.RESULTADO
-
-            elif estado_actual == Estado.RESULTADO:
-
-                volver = resultado.manejar_entrada(
-                    entrada_serial
-                )
-
-                if volver:
-                    estado_actual = Estado.MENU
-
-        if estado_actual == Estado.INSTRUCCIONES:
+        elif estado_actual == Estado.INSTRUCCIONES:
 
             if instrucciones.actualizar():
                 estado_actual = Estado.JUEGO
 
         elif estado_actual == Estado.JUEGO:
 
-            if juego.actualizar():
+            juego.actualizar()
+
+            if juego.terminado:
                 resultado.establecer_resultado(
-                    juego.juego_seleccionado,
-                    0
+                    juego.obtener_resultado()
                 )
 
                 estado_actual = Estado.RESULTADO

@@ -11,25 +11,24 @@ class Resultado:
         self.fuente_texto = pygame.font.Font(None, 48)
         self.fuente_contador = pygame.font.Font(None, 64)
 
-        self.juego_seleccionado = None
-
-        self.puntaje = 0
+        self.resultado = None
 
         self.tiempo_inicial = 5
         self.tiempo_restante = self.tiempo_inicial
 
         self.reloj_contador = pygame.time.get_ticks()
 
-    def establecer_resultado(self, juego, puntaje):
-        """Establece los datos del resultado y reinicia el contador."""
-        self.juego_seleccionado = juego
-        self.puntaje = puntaje
+    def establecer_resultado(self, resultado):
+        """Establece el resultado y reinicia el contador."""
+
+        self.resultado = resultado
 
         self.tiempo_restante = self.tiempo_inicial
         self.reloj_contador = pygame.time.get_ticks()
 
     def actualizar(self):
         """Actualiza el contador del resultado."""
+
         tiempo_actual = pygame.time.get_ticks()
 
         if tiempo_actual - self.reloj_contador >= 1000:
@@ -39,7 +38,7 @@ class Resultado:
         return self.tiempo_restante <= 0
 
     def manejar_entrada(self, entrada):
-        """Procesa una entrada del sistema."""
+        """Procesa una entrada del usuario."""
 
         if entrada.jugador == 0 and entrada.entrada == Entrada.SELECT:
             return True
@@ -48,6 +47,7 @@ class Resultado:
 
     def dibujar(self):
         """Dibuja el resultado."""
+
         self.pantalla.fill((0, 0, 0))
 
         titulo = self.fuente_titulo.render(
@@ -62,8 +62,11 @@ class Resultado:
 
         self.pantalla.blit(titulo, rectangulo_titulo)
 
+        if self.resultado is None:
+            return
+
         juego = self.fuente_texto.render(
-            self.juego_seleccionado,
+            self.resultado.juego,
             True,
             (255, 255, 255)
         )
@@ -75,7 +78,7 @@ class Resultado:
         self.pantalla.blit(juego, rectangulo_juego)
 
         puntaje = self.fuente_texto.render(
-            f"Puntaje: {self.puntaje}",
+            f"Puntaje: {self.resultado.puntaje}",
             True,
             (255, 255, 255)
         )

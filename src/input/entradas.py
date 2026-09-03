@@ -8,4 +8,3 @@ class Entrada(Enum):
     DOWN = 4
     SELECT = 5
     BACK = 6
-    SHAKE = 7

@@ -13,20 +13,50 @@ class Instrucciones:
 
         self.juego_seleccionado = None
 
+        self.titulo = ""
+        self.texto = []
+
         self.tiempo_inicial = 10
         self.tiempo_restante = self.tiempo_inicial
 
         self.reloj_contador = pygame.time.get_ticks()
 
+        self.instrucciones = {
+            "Carrera": [
+                "Aca van las instrucciones de Carrera."
+            ],
+
+            "Bit Dice": [
+                "Aca van las instrucciones de Bit Dice."
+            ],
+
+            "Piedra, Papel, Tijera, Fuego y Agua": [
+                "Aca van las instrucciones de Piedra, Papel, Tijera, Fuego y Agua."
+            ],
+
+            "Ataja la Pelotita": [
+                "Aca van las instrucciones de Ataja la Pelotita."
+            ]
+        }
+
     def establecer_juego(self, juego):
-        """Establece el juego seleccionado y reinicia el contador."""
+        """Establece el juego y carga sus instrucciones."""
+
         self.juego_seleccionado = juego
+
+        self.titulo = juego
+
+        self.texto = self.instrucciones.get(
+            juego,
+            ["No hay instrucciones disponibles."]
+        )
 
         self.tiempo_restante = self.tiempo_inicial
         self.reloj_contador = pygame.time.get_ticks()
 
     def actualizar(self):
         """Actualiza el contador de las instrucciones."""
+
         tiempo_actual = pygame.time.get_ticks()
 
         if tiempo_actual - self.reloj_contador >= 1000:
@@ -38,38 +68,52 @@ class Instrucciones:
     def manejar_entrada(self, entrada):
         """Procesa una entrada del sistema."""
 
-        if entrada.jugador == 0 and entrada.entrada == Entrada.SELECT:
-            return True
+        if entrada.jugador == 0:
+
+            if entrada.entrada == Entrada.SELECT:
+                return True
+
+            if entrada.entrada == Entrada.BACK:
+                return True
 
         return False
 
     def dibujar(self):
         """Dibuja las instrucciones."""
+
         self.pantalla.fill((0, 0, 0))
 
         titulo = self.fuente_titulo.render(
-            self.juego_seleccionado,
+            self.titulo,
             True,
             (255, 255, 255)
         )
 
         rectangulo_titulo = titulo.get_rect(
-            center=(400, 120)
+            center=(400, 100)
         )
 
-        self.pantalla.blit(titulo, rectangulo_titulo)
-
-        texto = self.fuente_texto.render(
-            "Aqui apareceran las instrucciones.",
-            True,
-            (255, 255, 255)
+        self.pantalla.blit(
+            titulo,
+            rectangulo_titulo
         )
 
-        rectangulo_texto = texto.get_rect(
-            center=(400, 280)
-        )
+        for indice, linea in enumerate(self.texto):
 
-        self.pantalla.blit(texto, rectangulo_texto)
+            texto = self.fuente_texto.render(
+                linea,
+                True,
+                (255, 255, 255)
+            )
+
+            rectangulo_texto = texto.get_rect(
+                center=(400, 250 + indice * 50)
+            )
+
+            self.pantalla.blit(
+                texto,
+                rectangulo_texto
+            )
 
         contador = self.fuente_contador.render(
             str(max(0, self.tiempo_restante)),
@@ -78,7 +122,10 @@ class Instrucciones:
         )
 
         rectangulo_contador = contador.get_rect(
-            center=(400, 450)
+            center=(400, 500)
         )
 
-        self.pantalla.blit(contador, rectangulo_contador)
+        self.pantalla.blit(
+            contador,
+            rectangulo_contador
+        )
