@@ -31,7 +31,13 @@ class Instrucciones:
             ],
 
             "Piedra, Papel, Tijera, Fuego y Agua": [
-                "Aca van las instrucciones de Piedra, Papel, Tijera, Fuego y Agua."
+                "<- Piedra        -> Papel",
+                "^ Tijera        v Agua",
+                "SACUDIR: Fuego",
+                "",
+                "Ambos jugadores eligen al mismo tiempo.",
+                "Cada elemento vence a dos de los demás.",
+                "¡Gana tantas rondas como puedas!"
             ],
 
             "Ataja la Pelotita": [
@@ -98,22 +104,21 @@ class Instrucciones:
             rectangulo_titulo
         )
 
+        if self.juego_seleccionado == "Piedra, Papel, Tijera, Fuego y Agua":
+            y_inicial = 210
+            separacion = 38
+            fuente_texto = pygame.font.Font(None, 30)
+
+        else:
+            y_inicial = 250
+            separacion = 50
+            fuente_texto = self.fuente_texto
+
         for indice, linea in enumerate(self.texto):
 
-            texto = self.fuente_texto.render(
-                linea,
-                True,
-                (255, 255, 255)
-            )
-
-            rectangulo_texto = texto.get_rect(
-                center=(400, 250 + indice * 50)
-            )
-
-            self.pantalla.blit(
-                texto,
-                rectangulo_texto
-            )
+            texto = fuente_texto.render(linea, True, (255, 255, 255))
+            rectangulo_texto = texto.get_rect(center=(400, y_inicial + indice * separacion))
+            self.pantalla.blit(texto, rectangulo_texto)
 
         contador = self.fuente_contador.render(
             str(max(0, self.tiempo_restante)),
@@ -121,9 +126,12 @@ class Instrucciones:
             (255, 255, 255)
         )
 
-        rectangulo_contador = contador.get_rect(
-            center=(400, 500)
-        )
+        if self.juego_seleccionado == "Piedra, Papel, Tijera, Fuego y Agua":
+            posicion_contador = (400, 560)
+        else:
+            posicion_contador = (400, 500)
+
+        rectangulo_contador = contador.get_rect(center=posicion_contador)
 
         self.pantalla.blit(
             contador,
