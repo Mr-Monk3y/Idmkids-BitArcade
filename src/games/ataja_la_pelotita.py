@@ -1,12 +1,29 @@
 import os
 import random
 import pygame
+import sys
 
 from games.juego_base import JuegoBase
 from games.resultado_juego import ResultadoJuego
 from input.entradas import Entrada
 from input.acciones import Accion
 
+def obtener_ruta_assets():
+    """Obtiene la ruta de los recursos del juego."""
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(
+            sys._MEIPASS,
+            "assets",
+            "juegos",
+            "ataja_la_pelotita"
+        )
+
+    return os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "assets",
+        "juegos",
+        "ataja_la_pelotita"
+    )
 
 class AtajaLaPelotita(JuegoBase):
     def __init__(self, pantalla):
@@ -74,12 +91,7 @@ class AtajaLaPelotita(JuegoBase):
         self.alto_sprite = 145
 
         # Ruta de los recursos
-        self.ruta_assets = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "assets",
-            "juegos",
-            "ataja_la_pelotita"
-        )
+        self.ruta_assets = obtener_ruta_assets()
 
         # Fondo
         self.archivo_fondo = "fondo.png"

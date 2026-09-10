@@ -1,1 +1,14 @@
+# Entorno virtual
 .venv/
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+
+# Archivos generados por PyInstaller
+build/
+*.spec
+
+# Carpeta de ejecutables
+dist/*
+!dist/BitArcade.exe

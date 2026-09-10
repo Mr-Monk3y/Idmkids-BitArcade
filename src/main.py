@@ -1,4 +1,6 @@
 import pygame
+import os
+import sys
 
 from input.input_manager import InputManager
 
@@ -20,7 +22,20 @@ TITULO_VENTANA = "Bit Arcade"
 def main():
     pygame.init()
 
-    icono = pygame.image.load("src/assets/icono.png")
+    if hasattr(sys, "_MEIPASS"):
+        ruta_icono = os.path.join(
+            sys._MEIPASS,
+            "assets",
+            "icono.png"
+        )
+    else:
+        ruta_icono = os.path.join(
+            os.path.dirname(__file__),
+            "assets",
+            "icono.png"
+        )
+
+    icono = pygame.image.load(ruta_icono)
     pygame.display.set_icon(icono)
 
     pantalla = pygame.display.set_mode(
