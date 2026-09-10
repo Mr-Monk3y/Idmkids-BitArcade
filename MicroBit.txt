@@ -1,0 +1,12 @@
+input.onGesture(Gesture.Shake, function () {
+    serial.writeLine("1:SHAKE")
+})
+basic.forever(function () {
+    if (input.buttonIsPressed(Button.A)) {
+        serial.writeLine("1:A")
+    }
+    if (input.buttonIsPressed(Button.B)) {
+        serial.writeLine("1:B")
+    }
+    basic.pause(50)
+})
