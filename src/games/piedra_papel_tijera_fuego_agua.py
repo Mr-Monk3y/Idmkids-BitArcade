@@ -68,6 +68,10 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         if self.jugada_j1 is not None and self.jugada_j2 is not None:
             self.det_ronda()
 
+    def manejar_entrada_serial(self, entrada):
+        """Procesa una entrada proveniente de un microbit."""
+        pass
+
     def det_ronda(self):
         """Determina quién ganó la ronda."""
         if self.jugada_j1 is None or self.jugada_j2 is None: return

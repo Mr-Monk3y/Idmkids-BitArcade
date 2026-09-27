@@ -1,12 +1,70 @@
+#Controlador
+let JUGADOR = 1
+let UMBRAL = 600
+let INTERVALO = 20
+let GRUPO_RADIO = 23
+
+radio.setGroup(GRUPO_RADIO)
+
 input.onGesture(Gesture.Shake, function () {
-    serial.writeLine("1:SHAKE")
+    radio.sendString("P" + JUGADOR + ":SHAKE")
 })
+
 basic.forever(function () {
-    if (input.buttonIsPressed(Button.A)) {
-        serial.writeLine("1:A")
+    let x = input.acceleration(Dimension.X)
+    let y = input.acceleration(Dimension.Y)
+
+    let superaX = Math.abs(x) > UMBRAL
+    let superaY = Math.abs(y) > UMBRAL
+
+    if (!superaX && !superaY) {
+        // No hay inclinación suficiente.
+        radio.sendString("P" + JUGADOR + ":NONE")
     }
-    if (input.buttonIsPressed(Button.B)) {
-        serial.writeLine("1:B")
+    else if (superaX && superaY) {
+        // Ambos ejes superan el umbral.
+        // Se utiliza el eje dominante.
+
+        if (Math.abs(x) >= Math.abs(y)) {
+            if (x > 0) {
+                radio.sendString("P" + JUGADOR + ":LEFT")
+            } else {
+                radio.sendString("P" + JUGADOR + ":RIGHT")
+            }
+        }
+        else {
+            if (y < 0) {
+                radio.sendString("P" + JUGADOR + ":UP")
+            } else {
+                radio.sendString("P" + JUGADOR + ":DOWN")
+            }
+        }
     }
-    basic.pause(50)
+    else if (superaX) {
+        // Solamente X supera el umbral.
+        if (x > 0) {
+            radio.sendString("P" + JUGADOR + ":LEFT")
+        } else {
+            radio.sendString("P" + JUGADOR + ":RIGHT")
+        }
+    }
+    else {
+        // Solamente Y supera el umbral.
+        if (y < 0) {
+            radio.sendString("P" + JUGADOR + ":UP")
+        } else {
+            radio.sendString("P" + JUGADOR + ":DOWN")
+        }
+    }
+
+    basic.pause(INTERVALO)
+})
+
+#Receptor
+let GRUPO_RADIO = 23
+
+radio.setGroup(GRUPO_RADIO)
+
+radio.onReceivedString(function (mensaje) {
+    serial.writeLine(mensaje)
 })

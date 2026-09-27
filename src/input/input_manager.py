@@ -41,12 +41,6 @@ class InputManager:
         self.conexion_serial = None
         self.puerto_serial = None
 
-        self.acciones_serial = {
-            "A": Accion.A,
-            "B": Accion.B,
-            "SHAKE": Accion.SHAKE,
-        }
-
     def obtener_evento(self, evento):
         """Obtiene una entrada a partir de un evento de Pygame."""
 
@@ -102,35 +96,52 @@ class InputManager:
         return entradas
 
     def obtener_entrada_serial(self, mensaje):
-        """Convierte un mensaje serial en una accion de jugador."""
-
+        """Convierte un mensaje del receptor en una entrada de jugador."""
         mensaje = mensaje.strip()
 
         partes = mensaje.split(":")
-
         if len(partes) != 2:
             return None
 
         jugador_texto = partes[0]
         accion_texto = partes[1].upper()
 
-        if not jugador_texto.isdigit():
+        # El identificador debe tener el formato P1, P2, P3 o P4.
+        if len(jugador_texto) != 2:
             return None
 
-        jugador = int(jugador_texto)
-
-        if jugador < 0 or jugador > 4:
+        if jugador_texto[0] != "P":
             return None
 
-        if accion_texto not in self.acciones_serial:
+        if not jugador_texto[1].isdigit():
             return None
 
-        accion = self.acciones_serial[accion_texto]
+        jugador = int(jugador_texto[1])
 
-        return EntradaJugador(
-            jugador,
-            accion=accion
-        )
+        if jugador < 1 or jugador > 4:
+            return None
+
+        entradas_movimiento = {
+            "LEFT": Entrada.LEFT,
+            "RIGHT": Entrada.RIGHT,
+            "UP": Entrada.UP,
+            "DOWN": Entrada.DOWN,
+            "NONE": Entrada.NONE,
+        }
+
+        if accion_texto in entradas_movimiento:
+            return EntradaJugador(
+                jugador,
+                entrada=entradas_movimiento[accion_texto]
+            )
+
+        if accion_texto == "SHAKE":
+            return EntradaJugador(
+                jugador,
+                accion=Accion.SHAKE
+            )
+
+        return None
 
     def conectar_serial(self, puerto, velocidad=115200):
         """Intenta conectar con el receptor por puerto serial."""
@@ -156,22 +167,30 @@ class InputManager:
 
             return False
 
-    def obtener_entrada_serial_real(self):
-        """Lee una entrada disponible desde el receptor."""
+    def obtener_entradas_serial_reales(self):
+        """Lee todas las entradas disponibles desde el receptor."""
+        entradas = []
 
         if self.conexion_serial is None:
-            return None
+            return entradas
 
-        if not self.conexion_serial.in_waiting:
-            return None
+        while self.conexion_serial.in_waiting:
+            try:
+                mensaje = (
+                    self.conexion_serial.readline()
+                    .decode()
+                    .strip()
+                )
 
-        try:
-            mensaje = self.conexion_serial.readline().decode().strip()
+                if not mensaje:
+                    continue
 
-            if not mensaje:
-                return None
+                entrada = self.obtener_entrada_serial(mensaje)
 
-            return self.obtener_entrada_serial(mensaje)
+                if entrada is not None:
+                    entradas.append(entrada)
 
-        except (serial.SerialException, UnicodeDecodeError):
-            return None
+            except (serial.SerialException, UnicodeDecodeError):
+                break
+
+        return entradas

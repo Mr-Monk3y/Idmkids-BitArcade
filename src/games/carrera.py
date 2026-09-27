@@ -18,6 +18,11 @@ class Carrera(JuegoBase):
 
         pass
 
+    def manejar_entrada_serial(self, entrada):
+        """Procesa una entrada proveniente de un microbit."""
+        
+        pass
+
     def actualizar(self):
         """Actualiza el estado del juego."""
 

@@ -92,3 +92,8 @@ Algunas cosas:
 19. Finalización del juego
 20. Cuando el juego termina tiene que poner self.terminado = True el main lo ve y pasa a resltados
 21. Con ESC vas al menu y con ENTER saltas el contador
+
+Puertos COM:
+powershell "Get-CimInstance Win32_SerialPort | Select-Object DeviceID,Name" para CMD
+Get-CimInstance Win32_SerialPort | Select-Object DeviceID,Name powershell
+wmic path Win32_SerialPort get DeviceID,Name otro

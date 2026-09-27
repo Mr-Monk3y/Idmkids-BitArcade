@@ -18,6 +18,11 @@ class JuegoBase(ABC):
         pass
 
     @abstractmethod
+    def manejar_entrada_serial(self, entrada):
+        """Procesa una entrada proveniente de un microbit."""
+        pass
+
+    @abstractmethod
     def actualizar(self):
         """Actualiza el estado del juego."""
         pass

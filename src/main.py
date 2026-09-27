@@ -47,6 +47,7 @@ def main():
     reloj = pygame.time.Clock()
 
     input_manager = InputManager()
+    input_manager.conectar_serial("COM7")
 
     menu = Menu(pantalla)
     instrucciones = Instrucciones(pantalla)
@@ -59,12 +60,15 @@ def main():
 
     ejecutando = True
 
-    def procesar_entrada(entrada):
+    def procesar_entrada(entrada, es_serial=False):
         """Procesa una entrada independientemente de su origen."""
 
         nonlocal estado_actual
         nonlocal juego_seleccionado
         nonlocal juego
+
+        if es_serial and estado_actual in (Estado.MENU, Estado.INSTRUCCIONES, Estado.RESULTADO):
+            return
 
         if estado_actual == Estado.MENU:
 
@@ -82,8 +86,6 @@ def main():
                     juego_seleccionado
                 )
 
-                juego.iniciar()
-
                 estado_actual = Estado.INSTRUCCIONES
 
         elif estado_actual == Estado.INSTRUCCIONES:
@@ -96,6 +98,7 @@ def main():
             avanzar = instrucciones.manejar_entrada(entrada)
 
             if avanzar:
+                juego.iniciar()
                 estado_actual = Estado.JUEGO
 
         elif estado_actual == Estado.JUEGO:
@@ -105,7 +108,10 @@ def main():
                     estado_actual = Estado.MENU
                     return
 
-            juego.manejar_entrada(entrada)
+            if es_serial:
+                juego.manejar_entrada_serial(entrada)
+            else:
+                juego.manejar_entrada(entrada)
 
             if juego.terminado:
                 resultado.establecer_resultado(
@@ -137,7 +143,12 @@ def main():
             entrada = input_manager.obtener_evento(evento)
 
             if entrada is not None:
-                procesar_entrada(entrada)
+                procesar_entrada(entrada)   
+
+        entradas_seriales = input_manager.obtener_entradas_serial_reales()
+
+        for entrada in entradas_seriales:
+            procesar_entrada(entrada, es_serial=True)
 
         if estado_actual == Estado.JUEGO:
             entradas_mantenidas = (
@@ -153,6 +164,7 @@ def main():
         elif estado_actual == Estado.INSTRUCCIONES:
 
             if instrucciones.actualizar():
+                juego.iniciar()
                 estado_actual = Estado.JUEGO
 
         elif estado_actual == Estado.JUEGO:

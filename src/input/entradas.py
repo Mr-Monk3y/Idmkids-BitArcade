@@ -8,3 +8,4 @@ class Entrada(Enum):
     DOWN = 4
     SELECT = 5
     BACK = 6
+    NONE = 7

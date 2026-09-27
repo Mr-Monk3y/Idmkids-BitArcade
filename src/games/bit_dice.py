@@ -121,6 +121,10 @@ class BitDice(JuegoBase):
             self.mensaje = f"Fallaste en el nivel {len(self.secuencia)}"
             self.terminado = True
 
+    def manejar_entrada_serial(self, entrada):
+        """Procesa una entrada proveniente de un microbit."""
+        pass
+
     def actualizar(self):
         """Actualiza el estado del juego."""
 

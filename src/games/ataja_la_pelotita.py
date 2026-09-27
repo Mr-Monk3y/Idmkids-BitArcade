@@ -6,7 +6,6 @@ import sys
 from games.juego_base import JuegoBase
 from games.resultado_juego import ResultadoJuego
 from input.entradas import Entrada
-from input.acciones import Accion
 
 def obtener_ruta_assets():
     """Obtiene la ruta de los recursos del juego."""
@@ -68,6 +67,8 @@ class AtajaLaPelotita(JuegoBase):
         self.posiciones_jugadores = []
         self.velocidades_y = []
         self.jugadores_en_suelo = []
+
+        self.movimientos_seriales = [Entrada.NONE, Entrada.NONE, Entrada.NONE, Entrada.NONE]
 
         # Dirección visual de cada jugador
         self.direcciones_jugadores = []
@@ -340,21 +341,14 @@ class AtajaLaPelotita(JuegoBase):
 
         jugador = entrada.jugador
 
-        if jugador < 0 or jugador > self.cantidad_jugadores:
-            return
-
-        # Durante la cuenta regresiva, Z permite seleccionar dos jugadores humanos.
-        if not self.partida_comenzada:
-            return
-
         if jugador < 1 or jugador > self.cantidad_jugadores:
             return
 
-        indice = jugador - 1
-
-        # No permitir movimiento durante la cuenta regresiva
+        # No permitir movimiento durante la cuenta regresiva.
         if not self.partida_comenzada:
             return
+
+        indice = jugador - 1
 
         # Controles mediante teclado
         if entrada.entrada == Entrada.LEFT:
@@ -376,26 +370,6 @@ class AtajaLaPelotita(JuegoBase):
                 )
                 self.jugadores_en_suelo[indice] = False
 
-        # Controles mediante micro:bit
-        elif jugador == 1 and entrada.accion == Accion.A:
-            self.posiciones_jugadores[indice][0] -= (
-                self.velocidad_jugador
-            )
-            self.direcciones_jugadores[indice] = "left"
-
-        elif jugador == 1 and entrada.accion == Accion.B:
-            self.posiciones_jugadores[indice][0] += (
-                self.velocidad_jugador
-            )
-            self.direcciones_jugadores[indice] = "right"
-
-        elif jugador == 1 and entrada.accion == Accion.SHAKE:
-            if self.jugadores_en_suelo[indice]:
-                self.velocidades_y[indice] = (
-                    -self.velocidad_salto
-                )
-                self.jugadores_en_suelo[indice] = False
-
         # Mantener la hitbox del jugador dentro de la pantalla
         limite_x = (
             self.ancho_pantalla -
@@ -407,6 +381,34 @@ class AtajaLaPelotita(JuegoBase):
 
         if self.posiciones_jugadores[indice][0] > limite_x:
             self.posiciones_jugadores[indice][0] = limite_x
+
+    def manejar_entrada_serial(self, entrada):
+        """Actualiza el estado de movimiento recibido por serial."""
+        if entrada is None:
+            return
+
+        jugador = entrada.jugador
+
+        if jugador < 1 or jugador > self.cantidad_jugadores:
+            return
+
+        if not self.partida_comenzada:
+            return
+
+        indice = jugador - 1
+
+        if entrada.entrada in (
+            Entrada.LEFT,
+            Entrada.RIGHT,
+            Entrada.NONE
+        ):
+            self.movimientos_seriales[indice] = entrada.entrada
+
+        elif entrada.entrada == Entrada.UP:
+            if self.jugadores_en_suelo[indice]:
+                self.velocidades_y[indice] = -self.velocidad_salto
+                self.jugadores_en_suelo[indice] = False
+
 
     def obtener_hitbox_jugador(self, indice):
         """Obtiene el rectángulo de colisión del jugador."""
@@ -485,6 +487,28 @@ class AtajaLaPelotita(JuegoBase):
             self.posiciones_jugadores[indice][1] += (
                 self.velocidades_y[indice]
             )
+
+            # Movimiento horizontal recibido por microbit.
+            if self.movimientos_seriales[indice] == Entrada.LEFT:
+                self.posiciones_jugadores[indice][0] -= (
+                    self.velocidad_jugador
+                )
+            elif self.movimientos_seriales[indice] == Entrada.RIGHT:
+                self.posiciones_jugadores[indice][0] += (
+                    self.velocidad_jugador
+                )
+
+            # Mantener al jugador dentro de la pantalla.
+            limite_x = (
+                self.ancho_pantalla -
+                self.ancho_jugador
+            )
+
+            if self.posiciones_jugadores[indice][0] < 0:
+                self.posiciones_jugadores[indice][0] = 0
+
+            if self.posiciones_jugadores[indice][0] > limite_x:
+                self.posiciones_jugadores[indice][0] = limite_x
 
             suelo = (
                 self.alto_pantalla -
