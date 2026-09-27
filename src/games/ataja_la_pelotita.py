@@ -42,9 +42,6 @@ class AtajaLaPelotita(JuegoBase):
         self.inicio_cuenta_regresiva = 0
         self.partida_comenzada = False
 
-        # Selección temporal de cantidad de jugadores humanos
-        self.seleccion_dos_jugadores = False
-
         # Jugadores
         self.cantidad_jugadores = 4
         self.jugadores_humanos = [1]
@@ -111,7 +108,8 @@ class AtajaLaPelotita(JuegoBase):
             "comun": "manzana.png",
             "grande": "sandia.png",
             "rapido": "kiwi.png",
-            "especial": "frutilla.png"
+            "especial": "frutilla.png",
+            "malo": "podrida.png"
         }
 
         self.imagenes_objetos = {}
@@ -121,31 +119,47 @@ class AtajaLaPelotita(JuegoBase):
         self.tipos_objetos = {
             "comun": {
                 "valor": 1,
-                "radio": 12,
+                "radio": 18,
                 "velocidad": 4
             },
             "grande": {
                 "valor": 2,
-                "radio": 18,
+                "radio": 26,
                 "velocidad": 3
             },
             "rapido": {
                 "valor": 3,
-                "radio": 10,
-                "velocidad": 7
+                "radio": 15,
+                "velocidad": 6
             },
             "especial": {
                 "valor": 5,
-                "radio": 14,
+                "radio": 21,
+                "velocidad": 5
+            },
+            "malo": {
+                "valor": -3,
+                "radio": 18,
                 "velocidad": 5
             }
         }
 
-        self.intervalo_generacion = 700
+        self.probabilidades_objetos = {
+            "comun": 30,
+            "grande": 20,
+            "rapido": 20,
+            "especial": 15,
+            "malo": 15
+        }
+
+        self.ultimo_tipo_objeto = None
+
+        self.intervalo_generacion = 500
         self.ultimo_objeto = 0
 
         # Puntajes
         self.puntajes = [0, 0, 0, 0]
+        self.indicadores_puntos = []
 
         # Bots
         self.velocidad_bot = 3
@@ -164,6 +178,8 @@ class AtajaLaPelotita(JuegoBase):
         self.tiempo_restante = self.duracion
         self.puntajes = [0, 0, 0, 0]
         self.objetos = []
+        self.indicadores_puntos = []
+        self.ultimo_tipo_objeto = None
 
         # Iniciar cuenta regresiva
         self.inicio_cuenta_regresiva = pygame.time.get_ticks()
@@ -344,6 +360,9 @@ class AtajaLaPelotita(JuegoBase):
         if jugador < 1 or jugador > self.cantidad_jugadores:
             return
 
+        if jugador not in self.jugadores_humanos:
+            return
+
         # No permitir movimiento durante la cuenta regresiva.
         if not self.partida_comenzada:
             return
@@ -390,6 +409,9 @@ class AtajaLaPelotita(JuegoBase):
         jugador = entrada.jugador
 
         if jugador < 1 or jugador > self.cantidad_jugadores:
+            return
+
+        if jugador not in self.jugadores_humanos:
             return
 
         if not self.partida_comenzada:
@@ -441,6 +463,40 @@ class AtajaLaPelotita(JuegoBase):
             self.alto_hitbox
         )
 
+    def agregar_indicador_puntos(self, jugador, valor):
+        """Crea un indicador visual cuando un jugador recoge un objeto."""
+        indice = jugador - 1
+
+        x = self.posiciones_jugadores[indice][0] + self.ancho_jugador / 2
+        y = self.posiciones_jugadores[indice][1]
+
+        if valor > 0:
+            texto = f"+{valor}"
+        else:
+            texto = str(valor)
+
+        self.indicadores_puntos.append({
+            "texto": texto,
+            "x": x,
+            "y": y,
+            "inicio": pygame.time.get_ticks()
+        })
+
+    def actualizar_indicadores_puntos(self):
+        """Actualiza la posición y elimina los indicadores vencidos."""
+        ahora = pygame.time.get_ticks()
+        indicadores_restantes = []
+
+        for indicador in self.indicadores_puntos:
+            # Hace que el indicador suba lentamente.
+            indicador["y"] -= 1
+
+            # El indicador permanece visible durante 700 ms.
+            if ahora - indicador["inicio"] < 700:
+                indicadores_restantes.append(indicador)
+
+        self.indicadores_puntos = indicadores_restantes
+
     def actualizar(self):
         """Actualiza continuamente el estado del juego."""
         if self.terminado:
@@ -457,9 +513,14 @@ class AtajaLaPelotita(JuegoBase):
             # Durante la cuenta regresiva, permitir seleccionar dos jugadores.
             teclas = pygame.key.get_pressed()
 
-            if teclas[pygame.K_z]:
-                self.seleccion_dos_jugadores = True
+            if teclas[pygame.K_1]:
+                self.jugadores_humanos = [1]
+            elif teclas[pygame.K_2]:
                 self.jugadores_humanos = [1, 2]
+            elif teclas[pygame.K_3]:
+                self.jugadores_humanos = [1, 2, 3]
+            elif teclas[pygame.K_4]:
+                self.jugadores_humanos = [1, 2, 3, 4]
 
             if tiempo_cuenta_regresiva >= self.duracion_cuenta_regresiva:
                 self.partida_comenzada = True
@@ -535,6 +596,7 @@ class AtajaLaPelotita(JuegoBase):
 
         # Actualizar objetos
         self.actualizar_objetos()
+        self.actualizar_indicadores_puntos()
 
         # Actualizar animaciones
         self.actualizar_animaciones()
@@ -546,9 +608,34 @@ class AtajaLaPelotita(JuegoBase):
 
     def generar_objeto(self):
         """Genera un nuevo objeto que cae desde la parte superior."""
-        tipo = random.choice(
-            list(self.tipos_objetos.keys())
-        )
+        tipos = list(self.probabilidades_objetos.keys())
+        pesos = list(self.probabilidades_objetos.values())
+
+        if self.ultimo_tipo_objeto is not None:
+            tipos_sin_repetir = [
+                tipo
+                for tipo in tipos
+                if tipo != self.ultimo_tipo_objeto
+            ]
+
+            pesos_sin_repetir = [
+                self.probabilidades_objetos[tipo]
+                for tipo in tipos_sin_repetir
+            ]
+
+            tipo = random.choices(
+                tipos_sin_repetir,
+                weights=pesos_sin_repetir,
+                k=1
+            )[0]
+        else:
+            tipo = random.choices(
+                tipos,
+                weights=pesos,
+                k=1
+            )[0]
+
+        self.ultimo_tipo_objeto = tipo
 
         datos = self.tipos_objetos[tipo]
 
@@ -610,6 +697,7 @@ class AtajaLaPelotita(JuegoBase):
                     self.puntajes[indice] += (
                         objeto["valor"]
                     )
+                    self.agregar_indicador_puntos(indice + 1,objeto["valor"])
                     atrapado = True
                     break
 
@@ -950,6 +1038,24 @@ class AtajaLaPelotita(JuegoBase):
                 rectangulo
             )
 
+        fuente_indicadores = pygame.font.Font(None, 32)
+
+        for indicador in self.indicadores_puntos:
+            texto = fuente_indicadores.render(
+                indicador["texto"],
+                True,
+                (255, 255, 255)
+            )
+
+            rectangulo = texto.get_rect(
+                center=(
+                    int(indicador["x"]),
+                    int(indicador["y"])
+                )
+            )
+
+            self.pantalla.blit(texto, rectangulo)
+
         # Jugadores
         for indice in range(
             self.cantidad_jugadores
@@ -958,126 +1064,50 @@ class AtajaLaPelotita(JuegoBase):
                 indice
             )
 
-            x = int(
-                self.posiciones_jugadores[indice][0]
-                + self.ancho_jugador / 2
-                - self.ancho_sprite / 2
-            )
+            x = int(self.posiciones_jugadores[indice][0]+ self.ancho_jugador / 2- self.ancho_sprite / 2)
 
             # El sprite queda apoyado sobre la misma base
             # que utiliza la hitbox del jugador.
-            y = int(
-                self.posiciones_jugadores[indice][1]
-                + self.alto_jugador
-                - self.alto_sprite
-            )
+            y = int(self.posiciones_jugadores[indice][1]+ self.alto_jugador- self.alto_sprite)
 
-            self.pantalla.blit(
-                sprite,
-                (x, y)
-            )
+            self.pantalla.blit(sprite,(x, y))
 
         # Cuenta regresiva inicial
         if not self.partida_comenzada:
             tiempo_actual = pygame.time.get_ticks()
-            tiempo_transcurrido = (
-                tiempo_actual - self.inicio_cuenta_regresiva
-            )
+            tiempo_transcurrido = (tiempo_actual - self.inicio_cuenta_regresiva)
 
-            segundos_restantes = 3 - (
-                tiempo_transcurrido // 1000
-            )
+            segundos_restantes = 3 - (tiempo_transcurrido // 1000)
 
-            fuente_cuenta = pygame.font.Font(
-                None,
-                100
-            )
+            fuente_cuenta = pygame.font.Font(None,100)
 
-            texto_cuenta = fuente_cuenta.render(
-                str(segundos_restantes),
-                True,
-                (255, 255, 255)
-            )
+            texto_cuenta = fuente_cuenta.render(str(segundos_restantes),True,(255, 255, 255))
 
-            rectangulo_cuenta = texto_cuenta.get_rect(
-                center=(
-                    self.ancho_pantalla // 2,
-                    self.alto_pantalla // 2
-                )
-            )
+            rectangulo_cuenta = texto_cuenta.get_rect(center=(self.ancho_pantalla // 2,self.alto_pantalla // 2))
 
-            self.pantalla.blit(
-                texto_cuenta,
-                rectangulo_cuenta
-            )
+            self.pantalla.blit(texto_cuenta,rectangulo_cuenta)
 
             fuente_seleccion = pygame.font.Font(None,32)
 
-            texto_seleccion = fuente_seleccion.render("Z: 2 jugadores",True,(255, 255, 255))
+            texto_seleccion = fuente_seleccion.render("Presioná 1, 2, 3 o 4",True,(255, 255, 255))
 
-            rectangulo_seleccion = texto_seleccion.get_rect(
-                center=(
-                    self.ancho_pantalla // 2,
-                    self.alto_pantalla // 2 + 90
-                )
-            )
+            rectangulo_seleccion = texto_seleccion.get_rect(center=(self.ancho_pantalla // 2,self.alto_pantalla // 2 + 90))
 
-            self.pantalla.blit(
-                texto_seleccion,
-                rectangulo_seleccion
-            )
+            self.pantalla.blit(texto_seleccion,rectangulo_seleccion)
 
         # HUD
-        fuente = pygame.font.Font(
-            None,
-            32
-        )
+        fuente = pygame.font.Font(None,32)
 
-        texto_tiempo = fuente.render(
-            f"Tiempo: {int(self.tiempo_restante)}",
-            True,
-            (255, 255, 255)
-        )
+        texto_tiempo = fuente.render(f"Tiempo: {int(self.tiempo_restante)}",True,(255, 255, 255))
 
-        self.pantalla.blit(
-            texto_tiempo,
-            (20, 20)
-        )
+        self.pantalla.blit(texto_tiempo,(20, 20))
 
-        for indice in range(
-            self.cantidad_jugadores
-        ):
-            texto_puntaje = fuente.render(
-                f"J{indice + 1}: {self.puntajes[indice]}",
-                True,
-                (255, 255, 255)
-            )
-
-            self.pantalla.blit(
-                texto_puntaje,
-                (
-                    180 + indice * 150,
-                    20
-                )
-            )
+        for indice in range(self.cantidad_jugadores):
+            texto_puntaje = fuente.render(f"J{indice + 1}: {self.puntajes[indice]}",True,(255, 255, 255))
+            self.pantalla.blit(texto_puntaje,(180 + indice * 150,20))
 
     def obtener_resultado(self):
         """Devuelve el resultado de la partida."""
-        puntaje_maximo = max(
-            self.puntajes
-        )
-
-        ganador = (
-            self.puntajes.index(
-                puntaje_maximo
-            ) + 1
-        )
-
-        return ResultadoJuego(
-            juego="Ataja la Pelotita",
-            puntaje=puntaje_maximo,
-            ganador=ganador,
-            datos_adicionales={
-                "puntajes": self.puntajes
-            }
-        )
+        puntaje_maximo = max(self.puntajes)
+        ganador = (self.puntajes.index(puntaje_maximo) + 1)
+        return ResultadoJuego(juego="Ataja la Pelotita", puntaje=puntaje_maximo, ganador=ganador, datos_adicionales={"puntajes": self.puntajes})

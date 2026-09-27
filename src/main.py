@@ -17,6 +17,7 @@ from input.entradas import Entrada
 ANCHO_PANTALLA = 800
 ALTO_PANTALLA = 600
 TITULO_VENTANA = "Bit Arcade"
+MODO_FULLSCREEN = False
 
 
 def main():
@@ -38,26 +39,27 @@ def main():
     icono = pygame.image.load(ruta_icono)
     pygame.display.set_icon(icono)
 
-    pantalla = pygame.display.set_mode(
-        (ANCHO_PANTALLA, ALTO_PANTALLA)
-    )
-
+    if MODO_FULLSCREEN:
+        pantalla = pygame.display.set_mode(
+            (0, 0),
+            pygame.FULLSCREEN
+        )
+    else:
+        pantalla = pygame.display.set_mode(
+            (ANCHO_PANTALLA, ALTO_PANTALLA)
+        )
     pygame.display.set_caption(TITULO_VENTANA)
-
+    superficie_juego = pygame.Surface((ANCHO_PANTALLA, ALTO_PANTALLA))
     reloj = pygame.time.Clock()
-
     input_manager = InputManager()
     input_manager.conectar_serial("COM7")
-
-    menu = Menu(pantalla)
-    instrucciones = Instrucciones(pantalla)
-    registro_juegos = RegistroJuegos(pantalla)
+    menu = Menu(superficie_juego)
+    instrucciones = Instrucciones(superficie_juego)
+    registro_juegos = RegistroJuegos(superficie_juego)
     juego = None
-    resultado = Resultado(pantalla)
-
+    resultado = Resultado(superficie_juego)
     estado_actual = Estado.MENU
     juego_seleccionado = None
-
     ejecutando = True
 
     def procesar_entrada(entrada, es_serial=False):
@@ -135,9 +137,15 @@ def main():
     while ejecutando:
 
         for evento in pygame.event.get():
-
             if evento.type == pygame.QUIT:
                 ejecutando = False
+                continue
+
+            if (evento.type == pygame.KEYDOWN and evento.key == pygame.K_F11):
+                if pantalla.get_flags() & pygame.FULLSCREEN:
+                    pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
+                else:
+                    pantalla = pygame.display.set_mode((0, 0),pygame.FULLSCREEN)
                 continue
 
             entrada = input_manager.obtener_evento(evento)
@@ -194,6 +202,36 @@ def main():
 
         elif estado_actual == Estado.RESULTADO:
             resultado.dibujar()
+
+        ancho_ventana, alto_ventana = pantalla.get_size()
+
+        escala = min(
+            ancho_ventana / ANCHO_PANTALLA,
+            alto_ventana / ALTO_PANTALLA
+        )
+
+        ancho_escalado = int(ANCHO_PANTALLA * escala)
+        alto_escalado = int(ALTO_PANTALLA * escala)
+
+        superficie_escalada = pygame.transform.scale(
+            superficie_juego,
+            (ancho_escalado, alto_escalado)
+        )
+
+        pantalla.fill((0, 0, 0))
+
+        posicion_x = (
+            ancho_ventana - ancho_escalado
+        ) // 2
+
+        posicion_y = (
+            alto_ventana - alto_escalado
+        ) // 2
+
+        pantalla.blit(
+            superficie_escalada,
+            (posicion_x, posicion_y)
+        )
 
         pygame.display.flip()
 
