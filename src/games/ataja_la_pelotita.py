@@ -33,7 +33,7 @@ class AtajaLaPelotita(JuegoBase):
         self.alto_pantalla = pantalla.get_height()
 
         # Duración de la partida
-        self.duracion = 30
+        self.duracion = 60
         self.tiempo_inicio = 0
         self.tiempo_restante = self.duracion
 
