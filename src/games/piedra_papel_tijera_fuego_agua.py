@@ -50,6 +50,7 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         self.lienzo = pygame.Surface((ANCHO_LIENZO, ALTO_LIENZO))
 
         self.texto = self.cargar_fuente(ruta_assets, 8)
+        self.texto_estado = self.cargar_fuente(ruta_assets, 7)
         self.texto_grande = self.cargar_fuente(ruta_assets, 16)
 
         # Fondo
@@ -182,6 +183,38 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         superficie = fuente.render(mensaje, False, BLANCO)
         self.lienzo.blit(superficie, superficie.get_rect(center=centro))
 
+    def escribir_con_fondo(self, fuente, texto, posicion):
+        """Escribe texto con un fondo negro translúcido."""
+
+        superficie_texto = fuente.render(
+            texto,
+            False,
+            (255, 255, 255)
+        )
+
+        # Un pequeño margen alrededor del texto
+        padding_x = 3
+        padding_y = 2
+
+        ancho = superficie_texto.get_width() + padding_x * 2
+        alto = superficie_texto.get_height() + padding_y * 2
+
+        # Panel transparente
+        panel = pygame.Surface(
+            (ancho, alto),
+            pygame.SRCALPHA
+        )
+
+        panel.fill((0, 0, 0, 140))
+
+        # Centrar el panel en la posición indicada
+        rect_panel = panel.get_rect(center=posicion)
+        self.lienzo.blit(panel, rect_panel)
+
+        # Centrar el texto encima
+        rect_texto = superficie_texto.get_rect(center=posicion)
+        self.lienzo.blit(superficie_texto, rect_texto)
+
     def dibujar(self):
         """Dibuja el juego."""
 
@@ -206,8 +239,17 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
             estado_j1 = "ELIGIENDO..." if self.jugada_j1 is None else "¡LISTO!"
             estado_j2 = "ELIGIENDO..." if self.jugada_j2 is None else "¡LISTO!"
 
-            self.escribir(self.texto, estado_j1, (x_j1, 84))
-            self.escribir(self.texto, estado_j2, (x_j2, 84))
+            self.escribir_con_fondo(
+                self.texto_estado,
+                estado_j1,
+                (x_j1, 84)
+            )
+
+            self.escribir_con_fondo(
+                self.texto_estado,
+                estado_j2,
+                (x_j2, 84)
+            )
 
         else:
 
