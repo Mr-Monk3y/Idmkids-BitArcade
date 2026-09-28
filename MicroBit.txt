@@ -3,36 +3,87 @@ let JUGADOR = 1
 let UMBRAL = 600
 let INTERVALO = 20
 let GRUPO_RADIO = 23
+let UMBRAL_CAMBIO_SHAKE = 850
+let VENTANA_SHAKE_MS = 320
+let COOLDOWN_SHAKE_MS = 900
+let CAMBIOS_NECESARIOS = 3
+let anteriorX = 0
+let anteriorY = 0
+let cambiosShake = 0
+let inicioVentanaShake = 0
+let ultimoShake = -COOLDOWN_SHAKE_MS
 
 radio.setGroup(GRUPO_RADIO)
 
-input.onGesture(Gesture.Shake, function () {
-    radio.sendString("P" + JUGADOR + ":SHAKE")
-})
-
 basic.forever(function () {
+    let ahora = input.runningTime()
     let x = input.acceleration(Dimension.X)
     let y = input.acceleration(Dimension.Y)
 
-    let superaX = Math.abs(x) > UMBRAL
-    let superaY = Math.abs(y) > UMBRAL
+    let cambioX = Math.abs(x - anteriorX)
+    let cambioY = Math.abs(y - anteriorY)
+    let cambioFuerte = Math.max(cambioX, cambioY) > UMBRAL_CAMBIO_SHAKE
 
-    if (!superaX && !superaY) {
-        // No hay inclinación suficiente.
-        radio.sendString("P" + JUGADOR + ":NONE")
+    if (ahora - inicioVentanaShake > VENTANA_SHAKE_MS) {
+        cambiosShake = 0
+        inicioVentanaShake = ahora
     }
-    else if (superaX && superaY) {
-        // Ambos ejes superan el umbral.
-        // Se utiliza el eje dominante.
 
-        if (Math.abs(x) >= Math.abs(y)) {
+    if (cambioFuerte) {
+        if (cambiosShake == 0) {
+            inicioVentanaShake = ahora
+        }
+
+        cambiosShake += 1
+    }
+
+    if (
+        cambiosShake >= CAMBIOS_NECESARIOS &&
+        ahora - ultimoShake >= COOLDOWN_SHAKE_MS
+    ) {
+        radio.sendString("P" + JUGADOR + ":SHAKE")
+
+        ultimoShake = ahora
+        cambiosShake = 0
+        inicioVentanaShake = ahora
+
+    } else {
+        let superaX = Math.abs(x) > UMBRAL
+        let superaY = Math.abs(y) > UMBRAL
+
+        if (!superaX && !superaY) {
+
+            radio.sendString("P" + JUGADOR + ":NONE")
+
+        } else if (superaX && superaY) {
+
+            if (Math.abs(x) >= Math.abs(y)) {
+
+                if (x > 0) {
+                    radio.sendString("P" + JUGADOR + ":LEFT")
+                } else {
+                    radio.sendString("P" + JUGADOR + ":RIGHT")
+                }
+
+            } else {
+
+                if (y < 0) {
+                    radio.sendString("P" + JUGADOR + ":UP")
+                } else {
+                    radio.sendString("P" + JUGADOR + ":DOWN")
+                }
+            }
+
+        } else if (superaX) {
+
             if (x > 0) {
                 radio.sendString("P" + JUGADOR + ":LEFT")
             } else {
                 radio.sendString("P" + JUGADOR + ":RIGHT")
             }
-        }
-        else {
+
+        } else {
+
             if (y < 0) {
                 radio.sendString("P" + JUGADOR + ":UP")
             } else {
@@ -40,22 +91,9 @@ basic.forever(function () {
             }
         }
     }
-    else if (superaX) {
-        // Solamente X supera el umbral.
-        if (x > 0) {
-            radio.sendString("P" + JUGADOR + ":LEFT")
-        } else {
-            radio.sendString("P" + JUGADOR + ":RIGHT")
-        }
-    }
-    else {
-        // Solamente Y supera el umbral.
-        if (y < 0) {
-            radio.sendString("P" + JUGADOR + ":UP")
-        } else {
-            radio.sendString("P" + JUGADOR + ":DOWN")
-        }
-    }
+
+    anteriorX = x
+    anteriorY = y
 
     basic.pause(INTERVALO)
 })

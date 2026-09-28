@@ -4,6 +4,7 @@ import pygame
 from games.juego_base import JuegoBase
 from games.resultado_juego import ResultadoJuego
 from input.entradas import Entrada
+from input.acciones import Accion
 
 ANCHO_LIENZO = 272
 ALTO_LIENZO = 160
@@ -36,6 +37,7 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         self.ganador_ronda = None
         self.ronda_resuelta = False
         self.tiempo_fin_ronda = None
+        self.ultimo_shake = {1: 0, 2: 0}
         self.gana = {"piedra" : ["tijera", "fuego"],
                      "papel" : ["piedra", "agua"],
                      "tijera" : ["papel", "agua"],
@@ -107,13 +109,23 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         self.ronda_resuelta = False
 
     def manejar_entrada(self, entrada):
-        """Procesa una entrada de un jugador."""
-        if self.ronda_resuelta:
+        """Procesa micro:bit; SHAKE elige fuego y descarta rebotes repetidos."""
+
+        if self.ronda_resuelta or entrada.jugador not in (1, 2):
             return
 
         jugada = None
 
-        if entrada.entrada == Entrada.LEFT:
+        if entrada.accion == Accion.SHAKE:
+            ahora = pygame.time.get_ticks()
+
+            if ahora - self.ultimo_shake[entrada.jugador] < 700:
+                return
+
+            self.ultimo_shake[entrada.jugador] = ahora
+            jugada = "fuego"
+
+        elif entrada.entrada == Entrada.LEFT:
             jugada = "piedra"
 
         elif entrada.entrada == Entrada.RIGHT:
@@ -125,16 +137,12 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         elif entrada.entrada == Entrada.DOWN:
             jugada = "agua"
 
-        elif entrada.entrada == Entrada.SELECT:
-            jugada = "fuego"
-
         if jugada is None:
             return
 
         if entrada.jugador == 1:
             self.jugada_j1 = jugada
-
-        elif entrada.jugador == 2:
+        else:
             self.jugada_j2 = jugada
 
         if self.jugada_j1 is not None and self.jugada_j2 is not None:
