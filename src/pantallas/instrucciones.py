@@ -4,6 +4,8 @@ import pygame
 
 from input.entradas import Entrada
 
+ARCHIVO_FUENTE = "PressStart2P-Regular.ttf"
+
 
 class Instrucciones:
     def __init__(self, pantalla):
@@ -83,19 +85,28 @@ class Instrucciones:
 
         return False
 
+    def cargar_fuente(self, ruta_assets, tamano):
+        """Carga la fuente pixelada; si no está el archivo usa la de pygame."""
+        ruta = os.path.join(ruta_assets, "fuentes", ARCHIVO_FUENTE)
+
+        try:
+            return pygame.font.Font(ruta, tamano)
+        except FileNotFoundError:
+            return pygame.font.Font(None, int(tamano * 1.5))
+
     def _cargar_fondo_pptfa(self):
         """Carga el mismo fondo del juego Piedra/Papel/Tijera/Fuego/Agua."""
 
         if hasattr(sys, "_MEIPASS"):
-            ruta_assets = os.path.join(sys._MEIPASS, "assets")
+            self.ruta_assets = os.path.join(sys._MEIPASS, "assets")
         else:
-            ruta_assets = os.path.join(
+            self.ruta_assets = os.path.join(
                 os.path.dirname(os.path.dirname(__file__)),
                 "assets"
             )
 
         ruta = os.path.join(
-            ruta_assets,
+            self.ruta_assets,
             "p_p_t_f_a",
             "fondo.png"
         )
@@ -107,47 +118,67 @@ class Instrucciones:
             return None
 
 
-    def _dibujar_flecha(self, centro, direccion, tamano=34):
-        """Dibuja una flecha clara en cualquiera de las cuatro direcciones."""
+    def _dibujar_flecha(self, centro, direccion, tamano=7):
+        """Dibuja una flecha estilo pixel art."""
 
         cx, cy = centro
-        t = tamano
+        p = tamano
 
-        puntos = [
-            (cx, cy - t),
-            (cx + t, cy),
-            (cx + t // 3, cy),
-            (cx + t // 3, cy + t),
-            (cx - t // 3, cy + t),
-            (cx - t // 3, cy),
-            (cx - t, cy),
+        # Forma base: flecha apuntando hacia arriba.
+        # Cada posición representa un "píxel" grande.
+        bloques = [
+            (0, -3),
+
+            (-1, -2),
+            (0, -2),
+            (1, -2),
+
+            (-2, -1),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (2, -1),
+
+            (-1, 0),
+            (0, 0),
+            (1, 0),
+
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+
+            (-1, 2),
+            (0, 2),
+            (1, 2),
+
+            (-1, 3),
+            (0, 3),
+            (1, 3),
         ]
 
-        base = pygame.Surface(
-            (t * 2 + 6, t * 2 + 6),
+        # Superficie transparente donde armamos la flecha.
+        superficie = pygame.Surface(
+            (p * 9, p * 9),
             pygame.SRCALPHA
         )
 
-        pts = [
-            (x - cx + t + 3, y - cy + t + 3)
-            for x, y in puntos
-        ]
+        centro_superficie = p * 4
 
-        # Interior blanco
-        pygame.draw.polygon(
-            base,
-            (255, 255, 255),
-            pts
-        )
+        # Dibujamos la flecha bloque por bloque.
+        for x, y in bloques:
+            pygame.draw.rect(
+                superficie,
+                (255, 255, 255),
+                (
+                    centro_superficie + x * p,
+                    centro_superficie + y * p,
+                    p,
+                    p
+                )
+            )
 
-        # Borde oscuro para que contraste con el fondo
-        pygame.draw.polygon(
-            base,
-            (20, 20, 30),
-            pts,
-            3
-        )
-
+        # La flecha original apunta hacia arriba.
+        # La rotamos según la dirección necesaria.
         angulos = {
             "UP": 0,
             "LEFT": 90,
@@ -155,15 +186,13 @@ class Instrucciones:
             "RIGHT": -90
         }
 
-        flecha = pygame.transform.rotate(
-            base,
+        superficie = pygame.transform.rotate(
+            superficie,
             angulos[direccion]
         )
 
-        self.pantalla.blit(
-            flecha,
-            flecha.get_rect(center=centro)
-        )
+        rect = superficie.get_rect(center=(cx, cy))
+        self.pantalla.blit(superficie, rect)
 
 
     def _dibujar_instrucciones_pptfa(self):
@@ -199,9 +228,10 @@ class Instrucciones:
             )
         )
 
-        fuente_titulo = pygame.font.Font(None, 48)
-        fuente_opcion = pygame.font.Font(None, 30)
-        fuente_info = pygame.font.Font(None, 25)
+        fuente_titulo = self.cargar_fuente(self.ruta_assets, 22)
+        fuente_opcion = self.cargar_fuente(self.ruta_assets, 14)
+        fuente_info = self.cargar_fuente(self.ruta_assets, 10)
+        fuente_fuego = self.cargar_fuente(self.ruta_assets, 16)
 
         # Título
         titulo1 = fuente_titulo.render(
@@ -238,7 +268,7 @@ class Instrucciones:
             self._dibujar_flecha(
                 centro,
                 direccion,
-                28
+                7
             )
 
             texto = fuente_opcion.render(
@@ -258,7 +288,7 @@ class Instrucciones:
             )
 
         # Shake / fuego
-        fuego = fuente_opcion.render(
+        fuego = fuente_fuego.render(
             "SACUDIR = FUEGO",
             True,
             (255, 255, 255)

@@ -47,10 +47,8 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
         ruta_assets = obtener_ruta_assets()
         ruta_juego = os.path.join(ruta_assets, "p_p_t_f_a")
 
-        # Lienzo pequeño: todo se dibuja acá y después se agranda
         self.lienzo = pygame.Surface((ANCHO_LIENZO, ALTO_LIENZO))
 
-        # Fuentes (en Press Start 2P los tamaños buenos son múltiplos de 8)
         self.texto = self.cargar_fuente(ruta_assets, 8)
         self.texto_grande = self.cargar_fuente(ruta_assets, 16)
 
