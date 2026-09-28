@@ -15,6 +15,10 @@ let ultimoShake = -COOLDOWN_SHAKE_MS
 
 radio.setGroup(GRUPO_RADIO)
 
+input.onButtonPressed(Button.AB, function () {
+    radio.sendString("P" + JUGADOR + ":BACK")
+})
+
 basic.forever(function () {
     let ahora = input.runningTime()
     let x = input.acceleration(Dimension.X)

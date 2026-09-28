@@ -141,6 +141,12 @@ class InputManager:
                 accion=Accion.SHAKE
             )
 
+        if accion_texto == "BACK":
+            return EntradaJugador(
+            0,
+            entrada=Entrada.BACK
+        )
+
         return None
 
     def conectar_serial(self, puerto, velocidad=115200):
