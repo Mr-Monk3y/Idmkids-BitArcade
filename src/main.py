@@ -159,12 +159,13 @@ def main():
             procesar_entrada(entrada, es_serial=True)
 
         if estado_actual == Estado.JUEGO:
-            entradas_mantenidas = (
-                input_manager.obtener_entradas_teclado_mantenidas()
-            )
+            if juego_seleccionado != "Bit Dice":
+                entradas_mantenidas = (
+                    input_manager.obtener_entradas_teclado_mantenidas()
+                )
 
-            for entrada in entradas_mantenidas:
-                procesar_entrada(entrada)
+                for entrada in entradas_mantenidas:
+                    procesar_entrada(entrada)
 
         if estado_actual == Estado.MENU:
             pass
