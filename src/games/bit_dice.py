@@ -32,6 +32,16 @@ COLOR_ENCENDIDO = {
     Entrada.RIGHT: (123, 245, 227),
 }
 
+COLOR_APAGADO = {
+    Entrada.UP: (90, 74, 30),
+    Entrada.DOWN: (90, 24, 48),
+    Entrada.LEFT: (24, 52, 90),
+    Entrada.RIGHT: (0, 82, 70),
+}
+
+TAMANO_EXTRA_ENCENDIDA = 20  # px que crece la flecha activa
+GROSOR_BORDE_BRILLANTE = 6
+
 # Tiempos de la animacion (segundos)
 PAUSA_ANTES_DE_MOSTRAR = 0.5
 DURACION_FLASH_SECUENCIA = 0.48
@@ -67,6 +77,8 @@ class BitDice(JuegoBase):
         self.direccion_encendida = None
         self.encendida_hasta = 0
 
+        self._ultima_direccion_serial = Entrada.NONE
+
     def iniciar(self):
         """Inicializa o reinicia el juego."""
 
@@ -75,6 +87,7 @@ class BitDice(JuegoBase):
 
         self.secuencia = []
         self.direccion_encendida = None
+        self._ultima_direccion_serial = Entrada.NONE
 
         self._agregar_paso()
 
@@ -93,7 +106,7 @@ class BitDice(JuegoBase):
         self.encendida_hasta = time.time() + duracion
 
     def manejar_entrada(self, entrada):
-        """Procesa una entrada de un jugador."""
+        """Procesa una entrada de teclado (evento directo de pulsacion)."""
 
         if entrada.jugador != JUGADOR_ACTIVO:
             return
@@ -102,31 +115,61 @@ class BitDice(JuegoBase):
             return
 
         if self.estado != EstadoBitDice.ESPERANDO:
-            return  # ignorar entradas mientras se muestra la secuencia o en pausa
+            return
+
+        self._procesar_direccion(entrada.entrada)
+
+    def manejar_entrada_serial(self, entrada):
+        """Procesa una entrada proveniente del control (micro:bit)."""
+
+        if entrada.jugador != JUGADOR_ACTIVO:
+            return
 
         direccion = entrada.entrada
+
+        if direccion == Entrada.NONE:
+            self._ultima_direccion_serial = Entrada.NONE
+            return
+
+        if direccion not in DIRECCIONES:
+            return
+
+        if direccion == self._ultima_direccion_serial:
+            return
+
+        self._ultima_direccion_serial = direccion
+
+        if self.estado != EstadoBitDice.ESPERANDO:
+            return
+
+        self._procesar_direccion(direccion)
+
+    def _procesar_direccion(self, direccion):
+        """Evalua la jugada realizada por el usuario."""
+
+        if self.paso_jugador >= len(self.secuencia):
+            return
+
         self._encender(direccion, DURACION_FLASH_JUGADOR)
 
+        # Evaluar la tecla contra la posicion exacta en la secuencia
         if direccion == self.secuencia[self.paso_jugador]:
             self.paso_jugador += 1
 
+            # Si se completo el nivel:
             if self.paso_jugador == len(self.secuencia):
                 self.puntaje = len(self.secuencia)
                 self.mensaje = "¡Bien! Siguiente nivel"
                 self.estado = EstadoBitDice.PAUSA
                 self.pausa_hasta = time.time() + PAUSA_TRAS_ACIERTO
-
+                self._ultima_direccion_serial = Entrada.NONE
         else:
             self.puntaje = len(self.secuencia) - 1
             self.mensaje = f"Fallaste en el nivel {len(self.secuencia)}"
             self.terminado = True
 
-    def manejar_entrada_serial(self, entrada):
-        """Procesa una entrada proveniente de un microbit."""
-        pass
-
     def actualizar(self):
-        """Actualiza el estado del juego."""
+        """Actualiza el estado del juego y maneja las transiciones de tiempo."""
 
         ahora = time.time()
 
@@ -147,6 +190,9 @@ class BitDice(JuegoBase):
                     self.proximo_flash = ahora + PAUSA_ENTRE_FLASHES
                     self.indice_mostrado += 1
                 else:
+                    # Preparar el turno del jugador limpiando banderas
+                    self.paso_jugador = 0
+                    self._ultima_direccion_serial = Entrada.NONE
                     self.estado = EstadoBitDice.ESPERANDO
                     self.mensaje = "¡Tu turno!"
 
@@ -189,14 +235,34 @@ class BitDice(JuegoBase):
 
     def _dibujar_flecha(self, direccion, centro, tamano):
         encendida = self.direccion_encendida == direccion
-        color = COLOR_ENCENDIDO[direccion] if encendida else COLOR_BASE[direccion]
+        hay_alguna_encendida = self.direccion_encendida is not None
 
-        rectangulo = pygame.Rect(0, 0, tamano, tamano)
+        if encendida:
+            color = COLOR_ENCENDIDO[direccion]
+            tamano_dibujo = tamano + TAMANO_EXTRA_ENCENDIDA
+        elif hay_alguna_encendida:
+            color = COLOR_APAGADO[direccion]
+            tamano_dibujo = tamano
+        else:
+            color = COLOR_BASE[direccion]
+            tamano_dibujo = tamano
+
+        rectangulo = pygame.Rect(0, 0, tamano_dibujo, tamano_dibujo)
         rectangulo.center = centro
+
+        if encendida:
+            borde = rectangulo.inflate(
+                GROSOR_BORDE_BRILLANTE * 2, GROSOR_BORDE_BRILLANTE * 2
+            )
+            pygame.draw.rect(
+                self.pantalla, COLOR_TEXTO, borde,
+                width=GROSOR_BORDE_BRILLANTE, border_radius=22
+            )
+
         pygame.draw.rect(self.pantalla, color, rectangulo, border_radius=16)
 
         cx, cy = centro
-        s = tamano * 0.22
+        s = tamano_dibujo * 0.22
         oscuro = (0, 0, 0)
 
         if direccion == Entrada.UP:
