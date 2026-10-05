@@ -15,6 +15,8 @@ class Instrucciones:
         self.fuente_texto = pygame.font.Font(None, 36)
         self.fuente_contador = pygame.font.Font(None, 80)
         self.fondo_pptfa = self._cargar_fondo_pptfa()
+        self.fondo_lluvia_frutas = self._cargar_fondo_lluvia_frutas()
+        self.objetos_lluvia_frutas = self._cargar_objetos_lluvia_frutas()
 
         self.juego_seleccionado = None
 
@@ -117,6 +119,53 @@ class Instrucciones:
         except (pygame.error, FileNotFoundError):
             return None
 
+    def _cargar_fondo_lluvia_frutas(self):
+        """Carga el fondo utilizado por Lluvia de Frutas."""
+
+        ruta = os.path.join(
+            self.ruta_assets,
+            "juegos",
+            "ataja_la_pelotita",
+            "fondo.png"
+        )
+
+        try:
+            return pygame.image.load(ruta).convert()
+
+        except (pygame.error, FileNotFoundError):
+            return None
+
+
+    def _cargar_objetos_lluvia_frutas(self):
+        """Carga las imágenes de los objetos de Lluvia de Frutas."""
+
+        archivos = {
+            "comun": "manzana.png",
+            "grande": "sandia.png",
+            "rapido": "kiwi.png",
+            "especial": "frutilla.png",
+            "malo": "podrida.png"
+        }
+
+        imagenes = {}
+
+        for nombre, archivo in archivos.items():
+            ruta = os.path.join(
+                self.ruta_assets,
+                "juegos",
+                "ataja_la_pelotita",
+                archivo
+            )
+
+            try:
+                imagenes[nombre] = pygame.image.load(
+                    ruta
+                ).convert_alpha()
+
+            except (pygame.error, FileNotFoundError):
+                imagenes[nombre] = None
+
+        return imagenes
 
     def _dibujar_flecha(self, centro, direccion, tamano=7):
         """Dibuja una flecha estilo pixel art."""
@@ -311,8 +360,13 @@ class Instrucciones:
             info.get_rect(center=(400, 465))
         )
 
+        fuente_contador = self.cargar_fuente(
+            self.ruta_assets,
+            32
+        )
+
         # Contador
-        contador = self.fuente_contador.render(
+        contador = fuente_contador.render(
             str(max(0, self.tiempo_restante)),
             True,
             (255, 255, 255)
@@ -323,11 +377,218 @@ class Instrucciones:
             contador.get_rect(center=(400, 535))
         )
 
+    def _dibujar_instrucciones_lluvia_frutas(self):
+        """Pantalla especial de instrucciones para Lluvia de Frutas."""
+
+        ancho, alto = self.pantalla.get_size()
+
+        # Mismo fondo que el juego.
+        if self.fondo_lluvia_frutas is not None:
+            fondo = pygame.transform.scale(
+                self.fondo_lluvia_frutas,
+                (ancho, alto)
+            )
+
+            self.pantalla.blit(fondo, (0, 0))
+
+        else:
+            self.pantalla.fill((0, 0, 0))
+
+        # Panel oscuro transparente.
+        panel = pygame.Surface(
+            (720, 510),
+            pygame.SRCALPHA
+        )
+
+        panel.fill((0, 0, 0, 145))
+
+        self.pantalla.blit(
+            panel,
+            panel.get_rect(
+                center=(ancho // 2, alto // 2)
+            )
+        )
+
+        # Fuente pixelada.
+        fuente_titulo = self.cargar_fuente(
+            self.ruta_assets,
+            22
+        )
+
+        # Título visible del juego.
+        titulo = fuente_titulo.render(
+            "LLUVIA DE FRUTAS",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            titulo,
+            titulo.get_rect(
+                center=(400, 80)
+            )
+        )
+
+        # Controles.
+        fuente_control = self.cargar_fuente(
+            self.ruta_assets,
+            12
+        )
+
+        controles = [
+            ((230, 185), "LEFT", "MOVERSE"),
+            ((400, 185), "UP", "SALTAR"),
+            ((570, 185), "RIGHT", "MOVERSE"),
+        ]
+
+        for centro, direccion, nombre in controles:
+            self._dibujar_flecha(
+                centro,
+                direccion,
+                7
+            )
+
+            texto = fuente_control.render(
+                nombre,
+                True,
+                (255, 255, 255)
+            )
+
+            self.pantalla.blit(
+                texto,
+                texto.get_rect(
+                    center=(
+                        centro[0],
+                        centro[1] + 58
+                    )
+                )
+            )
+
+        # Explicación de los objetos.
+        fuente_info = self.cargar_fuente(
+            self.ruta_assets,
+            10
+        )
+
+        texto_objetivo = fuente_info.render(
+            "ATRAPA LOS OBJETOS Y SUMA PUNTOS",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            texto_objetivo,
+            texto_objetivo.get_rect(
+                center=(400, 285)
+            )
+        )
+
+        fuente_puntos = self.cargar_fuente(
+            self.ruta_assets,
+            14
+        )
+
+        # Objetos y sus puntajes.
+        objetos = [
+            ("comun", 1),
+            ("grande", 2),
+            ("rapido", 3),
+            ("especial", 5),
+            ("malo", -3),
+        ]
+
+        posiciones_x = [
+            200,
+            300,
+            400,
+            500,
+            600
+        ]
+
+        for (tipo, puntos), x in zip(
+            objetos,
+            posiciones_x
+        ):
+            imagen = self.objetos_lluvia_frutas[tipo]
+
+            if imagen is not None:
+                imagen = pygame.transform.scale(
+                    imagen,
+                    (64, 64)
+                )
+
+                self.pantalla.blit(
+                    imagen,
+                    imagen.get_rect(
+                        center=(x, 345)
+                    )
+                )
+
+            if puntos > 0:
+                texto_puntos = f"+{puntos}"
+            else:
+                texto_puntos = str(puntos)
+
+            superficie_puntos = fuente_puntos.render(
+                texto_puntos,
+                True,
+                (255, 255, 255)
+            )
+
+            self.pantalla.blit(
+                superficie_puntos,
+                superficie_puntos.get_rect(
+                    center=(x, 395)
+                )
+            )
+
+        # Objetivo final.
+        fuente_objetivo = self.cargar_fuente(
+            self.ruta_assets,
+            15
+        )
+
+        objetivo = fuente_objetivo.render(
+            "¡CONSEGUI EL MAYOR PUNTAJE!",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            objetivo,
+            objetivo.get_rect(
+                center=(400, 460)
+            )
+        )
+
+        fuente_contador = self.cargar_fuente(
+            self.ruta_assets,
+            32
+        )
+
+        # Contador.
+        contador = fuente_contador.render(
+            str(max(0, self.tiempo_restante)),
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            contador,
+            contador.get_rect(
+                center=(400, 530)
+            )
+        )
+
     def dibujar(self):
         """Dibuja las instrucciones."""
 
         if self.juego_seleccionado == "Piedra, Papel, Tijera, Fuego y Agua":
             self._dibujar_instrucciones_pptfa()
+            return
+
+        if self.juego_seleccionado == "Ataja la Pelotita":
+            self._dibujar_instrucciones_lluvia_frutas()
             return
 
         self.pantalla.fill((0, 0, 0))

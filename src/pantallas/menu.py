@@ -119,6 +119,11 @@ class Menu:
             else:
                 color = (255, 255, 255)
 
+            if opcion == "Ataja la Pelotita":
+                nombre_visible = "Lluvia de Frutas"
+            else:
+                nombre_visible = opcion
+
             if opcion == "Piedra, Papel, Tijera, Fuego y Agua":
                 linea1 = self.fuente_opcion.render("PIEDRA, PAPEL, TIJERA", False, color)
                 linea2 = self.fuente_opcion.render("FUEGO Y AGUA", False, color)
