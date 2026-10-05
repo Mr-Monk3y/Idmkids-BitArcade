@@ -12,7 +12,6 @@ from pantallas.instrucciones import Instrucciones
 from pantallas.resultado import Resultado
 from input.entradas import Entrada
 
-
 # Configuracion de la ventana
 ANCHO_PANTALLA = 800
 ALTO_PANTALLA = 600
@@ -24,30 +23,17 @@ def main():
     pygame.init()
 
     if hasattr(sys, "_MEIPASS"):
-        ruta_icono = os.path.join(
-            sys._MEIPASS,
-            "assets",
-            "icono.png"
-        )
+        ruta_icono = os.path.join(sys._MEIPASS, "assets", "icono.png")
     else:
-        ruta_icono = os.path.join(
-            os.path.dirname(__file__),
-            "assets",
-            "icono.png"
-        )
+        ruta_icono = os.path.join(os.path.dirname(__file__), "assets", "icono.png")
 
     icono = pygame.image.load(ruta_icono)
     pygame.display.set_icon(icono)
 
     if MODO_FULLSCREEN:
-        pantalla = pygame.display.set_mode(
-            (0, 0),
-            pygame.FULLSCREEN
-        )
+        pantalla = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     else:
-        pantalla = pygame.display.set_mode(
-            (ANCHO_PANTALLA, ALTO_PANTALLA)
-        )
+        pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
     pygame.display.set_caption(TITULO_VENTANA)
     superficie_juego = pygame.Surface((ANCHO_PANTALLA, ALTO_PANTALLA))
     reloj = pygame.time.Clock()
@@ -69,7 +55,11 @@ def main():
         nonlocal juego_seleccionado
         nonlocal juego
 
-        if es_serial and estado_actual in (Estado.MENU, Estado.INSTRUCCIONES, Estado.RESULTADO):
+        if es_serial and estado_actual in (
+            Estado.MENU,
+            Estado.INSTRUCCIONES,
+            Estado.RESULTADO,
+        ):
             return
 
         if estado_actual == Estado.MENU:
@@ -80,13 +70,9 @@ def main():
 
                 juego_seleccionado = menu.opciones[opcion]
 
-                instrucciones.establecer_juego(
-                    juego_seleccionado
-                )
+                instrucciones.establecer_juego(juego_seleccionado)
 
-                juego = registro_juegos.crear_juego(
-                    juego_seleccionado
-                )
+                juego = registro_juegos.crear_juego(juego_seleccionado)
 
                 estado_actual = Estado.INSTRUCCIONES
 
@@ -107,6 +93,12 @@ def main():
 
             if entrada.jugador == 0:
                 if entrada.entrada == Entrada.BACK:
+
+                    # Si el juego necesita limpiar recursos al salir
+                    # (música, sonidos, etc.), le damos la oportunidad.
+                    if hasattr(juego, "detener"):
+                        juego.detener()
+
                     estado_actual = Estado.MENU
                     return
 
@@ -116,9 +108,7 @@ def main():
                 juego.manejar_entrada(entrada)
 
             if juego.terminado:
-                resultado.establecer_resultado(
-                    juego.obtener_resultado()
-                )
+                resultado.establecer_resultado(juego.obtener_resultado())
 
                 estado_actual = Estado.RESULTADO
 
@@ -141,17 +131,17 @@ def main():
                 ejecutando = False
                 continue
 
-            if (evento.type == pygame.KEYDOWN and evento.key == pygame.K_F11):
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_F11:
                 if pantalla.get_flags() & pygame.FULLSCREEN:
                     pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
                 else:
-                    pantalla = pygame.display.set_mode((0, 0),pygame.FULLSCREEN)
+                    pantalla = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
                 continue
 
             entrada = input_manager.obtener_evento(evento)
 
             if entrada is not None:
-                procesar_entrada(entrada)   
+                procesar_entrada(entrada)
 
         entradas_seriales = input_manager.obtener_entradas_serial_reales()
 
@@ -181,9 +171,7 @@ def main():
             juego.actualizar()
 
             if juego.terminado:
-                resultado.establecer_resultado(
-                    juego.obtener_resultado()
-                )
+                resultado.establecer_resultado(juego.obtener_resultado())
 
                 estado_actual = Estado.RESULTADO
 
@@ -206,33 +194,22 @@ def main():
 
         ancho_ventana, alto_ventana = pantalla.get_size()
 
-        escala = min(
-            ancho_ventana / ANCHO_PANTALLA,
-            alto_ventana / ALTO_PANTALLA
-        )
+        escala = min(ancho_ventana / ANCHO_PANTALLA, alto_ventana / ALTO_PANTALLA)
 
         ancho_escalado = int(ANCHO_PANTALLA * escala)
         alto_escalado = int(ALTO_PANTALLA * escala)
 
         superficie_escalada = pygame.transform.scale(
-            superficie_juego,
-            (ancho_escalado, alto_escalado)
+            superficie_juego, (ancho_escalado, alto_escalado)
         )
 
         pantalla.fill((0, 0, 0))
 
-        posicion_x = (
-            ancho_ventana - ancho_escalado
-        ) // 2
+        posicion_x = (ancho_ventana - ancho_escalado) // 2
 
-        posicion_y = (
-            alto_ventana - alto_escalado
-        ) // 2
+        posicion_y = (alto_ventana - alto_escalado) // 2
 
-        pantalla.blit(
-            superficie_escalada,
-            (posicion_x, posicion_y)
-        )
+        pantalla.blit(superficie_escalada, (posicion_x, posicion_y))
 
         pygame.display.flip()
 
