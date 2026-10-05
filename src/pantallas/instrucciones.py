@@ -580,6 +580,134 @@ class Instrucciones:
             )
         )
 
+    def _dibujar_instrucciones_bit_dice(self):
+        """Pantalla especial de instrucciones para Bit Dice."""
+
+        ancho, alto = self.pantalla.get_size()
+
+        # Fondo negro.
+        self.pantalla.fill((0, 0, 0))
+
+        # Fuentes pixeladas.
+        fuente_titulo = self.cargar_fuente(
+            self.ruta_assets,
+            24
+        )
+
+        fuente_texto = self.cargar_fuente(
+            self.ruta_assets,
+            12
+        )
+
+        fuente_destacada = self.cargar_fuente(
+            self.ruta_assets,
+            14
+        )
+
+        fuente_contador = self.cargar_fuente(
+            self.ruta_assets,
+            32
+        )
+
+        # Título.
+        titulo = fuente_titulo.render(
+            "BIT DICE",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            titulo,
+            titulo.get_rect(
+                center=(ancho // 2, 75)
+            )
+        )
+
+        # Primera instrucción.
+        texto_memoriza = fuente_texto.render(
+            "MEMORIZA LA SECUENCIA",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            texto_memoriza,
+            texto_memoriza.get_rect(
+                center=(ancho // 2, 155)
+            )
+        )
+
+        # Flechas que representan la secuencia.
+        direcciones = [
+            ((250, 235), "LEFT"),
+            ((350, 235), "UP"),
+            ((450, 235), "RIGHT"),
+            ((550, 235), "DOWN"),
+        ]
+
+        for centro, direccion in direcciones:
+            self._dibujar_flecha(
+                centro,
+                direccion,
+                10
+            )
+
+        # Segunda instrucción.
+        texto_repetir = fuente_texto.render(
+            "Y REPETILA EN ORDEN",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            texto_repetir,
+            texto_repetir.get_rect(
+                center=(ancho // 2, 325)
+            )
+        )
+
+        # Explicación de la dificultad.
+        texto_ronda = fuente_texto.render(
+            "CADA RONDA SUMA UN PASO",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            texto_ronda,
+            texto_ronda.get_rect(
+                center=(ancho // 2, 390)
+            )
+        )
+
+        # Objetivo final.
+        texto_objetivo = fuente_destacada.render(
+            "¡LLEGA LO MAS LEJOS!",
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            texto_objetivo,
+            texto_objetivo.get_rect(
+                center=(ancho // 2, 460)
+            )
+        )
+
+        # Cuenta regresiva.
+        contador = fuente_contador.render(
+            str(max(0, self.tiempo_restante)),
+            True,
+            (255, 255, 255)
+        )
+
+        self.pantalla.blit(
+            contador,
+            contador.get_rect(
+                center=(ancho // 2, 535)
+            )
+        )
+
     def dibujar(self):
         """Dibuja las instrucciones."""
 
@@ -589,6 +717,10 @@ class Instrucciones:
 
         if self.juego_seleccionado == "Ataja la Pelotita":
             self._dibujar_instrucciones_lluvia_frutas()
+            return
+
+        if self.juego_seleccionado == "Bit Dice":
+            self._dibujar_instrucciones_bit_dice()
             return
 
         self.pantalla.fill((0, 0, 0))
