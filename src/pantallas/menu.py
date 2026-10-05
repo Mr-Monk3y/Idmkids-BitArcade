@@ -22,6 +22,7 @@ class Menu:
         self.fondo = self.cargar_fondo()
 
         self.opciones = [
+            "Carrera",
             "Bit Dice",
             "Piedra, Papel, Tijera, Fuego y Agua",
             "Ataja la Pelotita"
