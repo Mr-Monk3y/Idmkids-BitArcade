@@ -88,6 +88,8 @@ class BitDice(JuegoBase):
         self.secuencia = []
         self.direccion_encendida = None
         self._ultima_direccion_serial = Entrada.NONE
+        self._direccion_candidata_serial = Entrada.NONE
+        self._repeticiones_serial = 0
 
         self._agregar_paso()
 
@@ -142,13 +144,16 @@ class BitDice(JuegoBase):
         if direccion not in DIRECCIONES:
             return
 
+        # Solo aceptar movimientos durante el turno del jugador.
+        if self.estado != EstadoBitDice.ESPERANDO:
+            return
+
         if direccion == self._ultima_direccion_serial:
             return
 
         self._ultima_direccion_serial = direccion
 
-        if self.estado != EstadoBitDice.ESPERANDO:
-            return
+        print("BIT DICE ACEPTA:", direccion)
 
         self._procesar_direccion(direccion)
 

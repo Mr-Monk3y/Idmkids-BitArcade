@@ -1,5 +1,6 @@
 import pygame
 import serial
+from serial.tools import list_ports
 
 from input.entrada import EntradaJugador
 from input.entradas import Entrada
@@ -41,6 +42,19 @@ class InputManager:
 
         self.conexion_serial = None
         self.puerto_serial = None
+
+    def detectar_microbit(self):
+        """Busca automáticamente una micro:bit conectada por USB."""
+
+        puertos = list_ports.comports()
+
+        for puerto in puertos:
+            if puerto.vid == 3368 and puerto.pid == 516:
+                print(f"Micro:bit encontrada en {puerto.device}")
+                return puerto.device
+
+        print("No se encontró ninguna micro:bit conectada")
+        return None
 
     def obtener_evento(self, evento):
         """Obtiene una entrada a partir de un evento de Pygame."""
