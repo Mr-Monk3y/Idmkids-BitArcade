@@ -1,14 +1,45 @@
+import os
+import sys
 import pygame
 
 from input.entradas import Entrada
+ARCHIVO_FUENTE = "PressStart2P-Regular.ttf"
 
+def obtener_ruta_assets():
+    """Devuelve la carpeta de assets."""
+
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(
+            sys._MEIPASS,
+            "assets"
+        )
+
+    return os.path.join(
+        os.path.dirname(os.path.dirname(__file__)),
+        "assets"
+    )
 
 class Menu:
     def __init__(self, pantalla):
         self.pantalla = pantalla
 
-        self.fuente_titulo = pygame.font.Font(None, 72)
-        self.fuente_opcion = pygame.font.Font(None, 48)
+        ruta_assets = obtener_ruta_assets()
+
+        ruta_fuente = os.path.join(
+            ruta_assets,
+            "fuentes",
+            ARCHIVO_FUENTE
+        )
+
+        self.fuente_titulo = pygame.font.Font(
+            ruta_fuente,
+            32
+        )
+
+        self.fuente_opcion = pygame.font.Font(
+            ruta_fuente,
+            18
+        )
 
         self.opciones = [
             "Carrera",
@@ -57,8 +88,13 @@ class Menu:
 
         for indice, opcion in enumerate(self.opciones):
 
+            if opcion == "Ataja la Pelotita":
+                nombre_visible = "Lluvia de Frutas"
+            else:
+                nombre_visible = opcion
+
             texto = self.fuente_opcion.render(
-                opcion,
+                nombre_visible,
                 True,
                 (255, 255, 255)
             )

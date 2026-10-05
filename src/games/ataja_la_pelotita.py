@@ -7,6 +7,8 @@ from games.juego_base import JuegoBase
 from games.resultado_juego import ResultadoJuego
 from input.entradas import Entrada
 
+ARCHIVO_FUENTE = "PressStart2P-Regular.ttf"
+
 def obtener_ruta_assets():
     """Obtiene la ruta de los recursos del juego."""
     if hasattr(sys, "_MEIPASS"):
@@ -90,6 +92,35 @@ class AtajaLaPelotita(JuegoBase):
 
         # Ruta de los recursos
         self.ruta_assets = obtener_ruta_assets()
+
+        # Fuente pixelada del juego
+        ruta_fuente = os.path.join(
+            self.ruta_assets,
+            "..",
+            "..",
+            "fuentes",
+            ARCHIVO_FUENTE
+        )
+
+        self.fuente_indicadores = pygame.font.Font(
+            ruta_fuente,
+            14
+        )
+
+        self.fuente_cuenta = pygame.font.Font(
+            ruta_fuente,
+            42
+        )
+
+        self.fuente_seleccion = pygame.font.Font(
+            ruta_fuente,
+            14
+        )
+
+        self.fuente_hud = pygame.font.Font(
+            ruta_fuente,
+            14
+        )
 
         # Fondo
         self.archivo_fondo = "fondo.png"
@@ -1038,10 +1069,8 @@ class AtajaLaPelotita(JuegoBase):
                 rectangulo
             )
 
-        fuente_indicadores = pygame.font.Font(None, 32)
-
         for indicador in self.indicadores_puntos:
-            texto = fuente_indicadores.render(
+            texto = self.fuente_indicadores.render(
                 indicador["texto"],
                 True,
                 (255, 255, 255)
@@ -1079,31 +1108,26 @@ class AtajaLaPelotita(JuegoBase):
 
             segundos_restantes = 3 - (tiempo_transcurrido // 1000)
 
-            fuente_cuenta = pygame.font.Font(None,100)
-
-            texto_cuenta = fuente_cuenta.render(str(segundos_restantes),True,(255, 255, 255))
+            texto_cuenta = self.fuente_cuenta.render(str(segundos_restantes),True,(255, 255, 255))
 
             rectangulo_cuenta = texto_cuenta.get_rect(center=(self.ancho_pantalla // 2,self.alto_pantalla // 2))
 
             self.pantalla.blit(texto_cuenta,rectangulo_cuenta)
 
-            fuente_seleccion = pygame.font.Font(None,32)
-
-            texto_seleccion = fuente_seleccion.render("Presioná 1, 2, 3 o 4",True,(255, 255, 255))
+            texto_seleccion = self.fuente_seleccion.render("Presioná 1, 2, 3 o 4",True,(255, 255, 255))
 
             rectangulo_seleccion = texto_seleccion.get_rect(center=(self.ancho_pantalla // 2,self.alto_pantalla // 2 + 90))
 
             self.pantalla.blit(texto_seleccion,rectangulo_seleccion)
 
         # HUD
-        fuente = pygame.font.Font(None,32)
 
-        texto_tiempo = fuente.render(f"Tiempo: {int(self.tiempo_restante)}",True,(255, 255, 255))
+        texto_tiempo = self.fuente_hud.render(f"Tiempo: {int(self.tiempo_restante)}",True,(255, 255, 255))
 
         self.pantalla.blit(texto_tiempo,(20, 20))
 
         for indice in range(self.cantidad_jugadores):
-            texto_puntaje = fuente.render(f"J{indice + 1}: {self.puntajes[indice]}",True,(255, 255, 255))
+            texto_puntaje = self.fuente_hud.render(f"J{indice + 1}: {self.puntajes[indice]}",True,(255, 255, 255))
             self.pantalla.blit(texto_puntaje,(180 + indice * 150,20))
 
     def obtener_resultado(self):
