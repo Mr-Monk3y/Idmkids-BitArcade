@@ -22,7 +22,6 @@ class Menu:
         self.fondo = self.cargar_fondo()
 
         self.opciones = [
-            "Carrera",
             "Bit Dice",
             "Piedra, Papel, Tijera, Fuego y Agua",
             "Ataja la Pelotita"
@@ -142,9 +141,3 @@ class Menu:
                 if indice == self.opcion_seleccionada:
                     pygame.draw.rect(self.pantalla, (255, 210, 80), rectangulo.inflate(30, 18), 2)
 
-
-        ayuda = self.fuente_ayuda.render("ARRIBA / ABAJO PARA ELEGIR", False, (255, 255, 255))
-
-        rect_ayuda = ayuda.get_rect(center=(x_centro, int(alto * 0.94)))
-
-        self.pantalla.blit(ayuda, rect_ayuda)

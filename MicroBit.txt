@@ -3,84 +3,40 @@ let JUGADOR = 1
 let UMBRAL = 600
 let INTERVALO = 20
 let GRUPO_RADIO = 23
-let UMBRAL_CAMBIO_SHAKE = 850
-let VENTANA_SHAKE_MS = 320
-let COOLDOWN_SHAKE_MS = 900
-let CAMBIOS_NECESARIOS = 3
-let anteriorX = 0
-let anteriorY = 0
-let cambiosShake = 0
-let inicioVentanaShake = 0
-let ultimoShake = -COOLDOWN_SHAKE_MS
 
 radio.setGroup(GRUPO_RADIO)
+
+input.onButtonPressed(Button.A, function () {
+    radio.sendString("P" + JUGADOR + ":SHAKE")
+})
+
+
+input.onButtonPressed(Button.B, function () {
+    radio.sendString("P" + JUGADOR + ":FINISH")
+})
+
 
 input.onButtonPressed(Button.AB, function () {
     radio.sendString("P" + JUGADOR + ":BACK")
 })
 
-input.onButtonPressed(Button.B, function() { radio.sendString("P" + JUGADOR + ":FINISH")})
 
 basic.forever(function () {
-    let ahora = input.runningTime()
+
     let x = input.acceleration(Dimension.X)
     let y = input.acceleration(Dimension.Y)
 
-    let cambioX = Math.abs(x - anteriorX)
-    let cambioY = Math.abs(y - anteriorY)
-    let cambioFuerte = Math.max(cambioX, cambioY) > UMBRAL_CAMBIO_SHAKE
+    let superaX = Math.abs(x) > UMBRAL
+    let superaY = Math.abs(y) > UMBRAL
 
-    if (ahora - inicioVentanaShake > VENTANA_SHAKE_MS) {
-        cambiosShake = 0
-        inicioVentanaShake = ahora
-    }
 
-    if (cambioFuerte) {
-        if (cambiosShake == 0) {
-            inicioVentanaShake = ahora
-        }
+    if (!superaX && !superaY) {
 
-        cambiosShake += 1
-    }
+        radio.sendString("P" + JUGADOR + ":NONE")
 
-    if (
-        cambiosShake >= CAMBIOS_NECESARIOS &&
-        ahora - ultimoShake >= COOLDOWN_SHAKE_MS
-    ) {
-        radio.sendString("P" + JUGADOR + ":SHAKE")
+    } else if (superaX && superaY) {
 
-        ultimoShake = ahora
-        cambiosShake = 0
-        inicioVentanaShake = ahora
-
-    } else {
-        let superaX = Math.abs(x) > UMBRAL
-        let superaY = Math.abs(y) > UMBRAL
-
-        if (!superaX && !superaY) {
-
-            radio.sendString("P" + JUGADOR + ":NONE")
-
-        } else if (superaX && superaY) {
-
-            if (Math.abs(x) >= Math.abs(y)) {
-
-                if (x > 0) {
-                    radio.sendString("P" + JUGADOR + ":LEFT")
-                } else {
-                    radio.sendString("P" + JUGADOR + ":RIGHT")
-                }
-
-            } else {
-
-                if (y < 0) {
-                    radio.sendString("P" + JUGADOR + ":UP")
-                } else {
-                    radio.sendString("P" + JUGADOR + ":DOWN")
-                }
-            }
-
-        } else if (superaX) {
+        if (Math.abs(x) >= Math.abs(y)) {
 
             if (x > 0) {
                 radio.sendString("P" + JUGADOR + ":LEFT")
@@ -96,10 +52,24 @@ basic.forever(function () {
                 radio.sendString("P" + JUGADOR + ":DOWN")
             }
         }
+
+    } else if (superaX) {
+
+        if (x > 0) {
+            radio.sendString("P" + JUGADOR + ":LEFT")
+        } else {
+            radio.sendString("P" + JUGADOR + ":RIGHT")
+        }
+
+    } else {
+
+        if (y < 0) {
+            radio.sendString("P" + JUGADOR + ":UP")
+        } else {
+            radio.sendString("P" + JUGADOR + ":DOWN")
+        }
     }
 
-    anteriorX = x
-    anteriorY = y
 
     basic.pause(INTERVALO)
 })

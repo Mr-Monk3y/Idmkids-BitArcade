@@ -192,6 +192,8 @@ class InputManager:
                 if not mensaje:
                     continue
 
+                print("MICROBIT:", mensaje)
+                
                 entrada = self.obtener_entrada_serial(mensaje)
 
                 if entrada is not None:
