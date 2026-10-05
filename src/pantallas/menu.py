@@ -135,7 +135,7 @@ class Menu:
                     rectangulo = rect1.union(rect2)
                     pygame.draw.rect(self.pantalla, (255, 210, 80), rectangulo.inflate(30,14), 2)
             else:
-                texto = self.fuente_opcion.render(opcion.upper(), False, color)
+                texto = self.fuente_opcion.render(nombre_visible.upper(), False, color)
                 rectangulo = texto.get_rect(center=(x_centro, y))
                 self.pantalla.blit(texto, rectangulo)
 
