@@ -52,7 +52,7 @@ def main():
     superficie_juego = pygame.Surface((ANCHO_PANTALLA, ALTO_PANTALLA))
     reloj = pygame.time.Clock()
     input_manager = InputManager()
-    input_manager.conectar_serial("COM7")
+    input_manager.conectar_serial("COM8")
     menu = Menu(superficie_juego)
     instrucciones = Instrucciones(superficie_juego)
     registro_juegos = RegistroJuegos(superficie_juego)

@@ -1133,6 +1133,6 @@ class AtajaLaPelotita(JuegoBase):
     def obtener_resultado(self):
         """Devuelve el resultado de la partida."""
         puntaje_maximo = max(self.puntajes)
-        numero_ganador = self.puntajer.index(puntaje_maximo) + 1
+        numero_ganador = self.puntajes.index(puntaje_maximo) + 1
         ganador = f"Jugador {numero_ganador}"
         return ResultadoJuego(juego="Ataja la Pelotita", puntaje=puntaje_maximo, ganador=ganador, datos_adicionales={"puntajes_jugadores": self.puntajes})
