@@ -36,6 +36,7 @@ class InputManager:
             # Entradas generales
             pygame.K_RETURN: EntradaJugador(0, Entrada.SELECT),
             pygame.K_ESCAPE: EntradaJugador(0, Entrada.BACK),
+            pygame.K_e: EntradaJugador(0, Entrada.FINISH),
         }
 
         self.conexion_serial = None

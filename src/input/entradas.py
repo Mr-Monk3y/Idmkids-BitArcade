@@ -9,3 +9,4 @@ class Entrada(Enum):
     SELECT = 5
     BACK = 6
     NONE = 7
+    FINISH = 8

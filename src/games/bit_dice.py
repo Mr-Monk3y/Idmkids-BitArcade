@@ -108,6 +108,10 @@ class BitDice(JuegoBase):
     def manejar_entrada(self, entrada):
         """Procesa una entrada de teclado (evento directo de pulsacion)."""
 
+        if entrada.entrada == Entrada.FINISH:
+            self.terminado = True
+            return
+
         if entrada.jugador != JUGADOR_ACTIVO:
             return
 

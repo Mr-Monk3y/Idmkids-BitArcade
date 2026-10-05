@@ -110,6 +110,10 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
     def manejar_entrada(self, entrada):
         """Procesa micro:bit; SHAKE elige fuego y descarta rebotes repetidos."""
 
+        if entrada.entrada == Entrada.FINISH:
+            self.terminado = True
+            return
+        
         if self.ronda_resuelta or entrada.jugador not in (1, 2):
             return
 
@@ -149,7 +153,7 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
 
     def manejar_entrada_serial(self, entrada):
         """Procesa una entrada proveniente de un microbit."""
-        pass
+        self.manejar_entrada(entrada)
 
     def det_ronda(self):
         """Determina quién ganó la ronda."""
@@ -290,7 +294,13 @@ class PiedraPapelTijeraFuegoAgua(JuegoBase):
     def obtener_resultado(self):
         """Devuelve el resultado del juego."""
 
-        return ResultadoJuego(
-            juego="Piedra, Papel, Tijera, Fuego y Agua",
-            puntaje=self.puntaje
-        )
+        if self.puntos_j1 > self.puntos_j2:
+            ganador = "Jugador 1"
+        elif self.puntos_j2 > self.puntos_j1:
+            ganador = "Jugador 2"
+        else:
+            ganador = "Empate"
+
+        return ResultadoJuego(juego="Piedra, Papel, Tijera, Fuego y Agua", 
+                              ganador = ganador, 
+                              datos_adicionales = {"puntajes_jugadores": [self.puntos_j1, self.puntos_j2]})
