@@ -129,6 +129,10 @@ class BitDice(JuegoBase):
         if entrada.jugador != JUGADOR_ACTIVO:
             return
 
+        if entrada.entrada == Entrada.FINISH:
+            self.terminado = True
+            return
+
         direccion = entrada.entrada
 
         if direccion == Entrada.NONE:

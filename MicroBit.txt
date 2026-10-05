@@ -19,6 +19,8 @@ input.onButtonPressed(Button.AB, function () {
     radio.sendString("P" + JUGADOR + ":BACK")
 })
 
+input.onButtonPressed(Button.B, function() { radio.sendString("P" + JUGADOR + ":FINISH")})
+
 basic.forever(function () {
     let ahora = input.runningTime()
     let x = input.acceleration(Dimension.X)
